@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:game_man/constants.dart';
 import 'package:game_man/download_widget.dart';
 import 'package:game_man/game_list.dart';
+import 'package:game_man/player.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'no_glow_scroll_behaviour.dart';
@@ -53,7 +54,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  GameList _gameList = GameList();
+  final GameList _gameList = GameList();
   List<Game>? _games;
   String? _lastQuery;
 
@@ -123,11 +124,17 @@ class GameCards extends StatelessWidget {
 
   final List<Game> games;
 
-  GameCard _buildGameCard(Game game) {
+  GameCard _buildGameCard(BuildContext context, Game game) {
     return GameCard(
       image: game.image,
       title: game.name,
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PlayerScreen(),
+            ));
+      },
     );
   }
 
@@ -141,7 +148,8 @@ class GameCards extends StatelessWidget {
         children: [
           Container(height: size.height / 4.5 + (kDefaultPadding * 2)),
           Wrap(
-            children: games.map(_buildGameCard).toList(),
+            children:
+                games.map((game) => _buildGameCard(context, game)).toList(),
           ),
         ],
       ),
@@ -177,14 +185,7 @@ class Header extends StatelessWidget {
                   blurRadius: 20,
                 )
               ],
-              gradient: const LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [
-                  Color(0xFF00afff),
-                  Color(0xFF0075ff),
-                ],
-              ),
+              gradient: kDefaultGradient,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(39),
                 bottomRight: Radius.circular(39),
@@ -284,12 +285,12 @@ class GameCard extends StatelessWidget {
     return DownloadWidget(
         url: image,
         buildWaiting: () => Container(
-          padding: const EdgeInsets.all(kDefaultPadding * 2),
-          child: const CircularProgressIndicator(
+              padding: const EdgeInsets.all(kDefaultPadding * 2),
+              child: const CircularProgressIndicator(
                 value: null,
                 color: Colors.white,
               ),
-        ),
+            ),
         buildError: () => const Icon(
               Icons.error,
               color: Colors.white,
@@ -321,14 +322,7 @@ class GameCard extends StatelessWidget {
                 width: size.width * 0.4,
                 height: size.width * 0.4,
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      Color(0xFF00afff),
-                      Color(0xFF0075ff),
-                    ],
-                  ),
+                  gradient: kDefaultGradient,
                 ),
                 child: _getImage(),
               ),
