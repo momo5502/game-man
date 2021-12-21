@@ -11,7 +11,7 @@ enum DownloadWidgetStatus {
 }
 
 typedef BuildCallback = Widget Function();
-typedef BuildDataCallback = Widget Function(Uint8List);
+typedef BuildDataCallback = Widget Function(Uint8List, bool);
 
 class DownloadWidget extends StatefulWidget {
   const DownloadWidget({
@@ -68,13 +68,14 @@ class _DownloadWidgetState extends State<DownloadWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_status == DownloadWidgetStatus.uninitialized) {
+    bool wasUninitialized = _status == DownloadWidgetStatus.uninitialized;
+    if (wasUninitialized) {
       _status = DownloadWidgetStatus.waiting;
       _startDownload();
     }
 
     if (_status == DownloadWidgetStatus.loaded) {
-      return widget.buildLoaded(_data!);
+      return widget.buildLoaded(_data!, wasUninitialized);
     }
 
     if (_status == DownloadWidgetStatus.error) {

@@ -7,6 +7,7 @@ import 'package:game_man/game_list.dart';
 import 'package:game_man/player.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'fade_in.dart';
 import 'no_glow_scroll_behaviour.dart';
 
 void main() {
@@ -46,6 +47,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final GameList _gameList = GameList();
   final _searchController = TextEditingController();
+  List<Game>? _games;
+  String? _lastQuery;
 
   @override
   void initState() {
@@ -59,9 +62,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _searchController.removeListener(_searchGames);
   }
 
-  List<Game>? _games;
-  String? _lastQuery;
-
   void _setGames(List<Game>? games) {
     setState(() {
       _games = games;
@@ -70,6 +70,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _searchGames() {
     final text = _searchController.text;
+    if (text == _lastQuery) {
+      return;
+    }
+
     _lastQuery = text;
     if (text.isEmpty) {
       _setGames(null);
@@ -152,17 +156,20 @@ class GameCards extends StatelessWidget {
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
-    return SingleChildScrollView(
-      key: games.isEmpty ? null : ObjectKey(games[0]),
-      child: Column(
-        children: [
-          Container(height: size.height / 4.5 + (kDefaultPadding * 2)),
-          Wrap(
-            children:
-                games.map((game) => _buildGameCard(context, game)).toList(),
-          ),
-          Container(height: kDefaultPadding),
-        ],
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 100),
+      child: SingleChildScrollView(
+        key: ObjectKey(games),
+        child: Column(
+          children: [
+            Container(height: size.height / 4.5 + (kDefaultPadding * 2)),
+            Wrap(
+              children:
+                  games.map((game) => _buildGameCard(context, game)).toList(),
+            ),
+            Container(height: kDefaultPadding),
+          ],
+        ),
       ),
     );
   }
@@ -259,7 +266,7 @@ class Header extends StatelessWidget {
                   ),
                 ),
                 AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 100),
                   crossFadeState: searchController.text.isEmpty
                       ? CrossFadeState.showFirst
                       : CrossFadeState.showSecond,
@@ -327,23 +334,28 @@ class GameCard extends StatelessWidget {
     }
 
     return DownloadWidget(
-        url: image,
-        buildWaiting: () => Container(
-              padding: const EdgeInsets.all(kDefaultPadding * 2),
-              child: const CircularProgressIndicator(
-                value: null,
-                color: Colors.white,
-              ),
-            ),
-        buildError: () => const Icon(
-              Icons.error,
-              color: Colors.white,
-              size: 60,
-            ),
-        buildLoaded: (data) => Image.memory(
-              data,
-              fit: BoxFit.cover,
-            ));
+      url: image,
+      buildWaiting: () => Container(
+        padding: const EdgeInsets.all(kDefaultPadding * 2),
+        child: const CircularProgressIndicator(
+          value: null,
+          color: Colors.white,
+        ),
+      ),
+      buildError: () => const Icon(
+        Icons.error,
+        color: Colors.white,
+        size: 60,
+      ),
+      buildLoaded: (data, skipAnimation) => FadeIn(
+        duration: const Duration(milliseconds: 100),
+        skipAnimation: skipAnimation,
+        child: Image.memory(
+          data,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
   }
 
   @override
