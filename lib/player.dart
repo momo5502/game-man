@@ -46,9 +46,7 @@ class GamePad extends StatelessWidget {
 
     final bottomOffset = size.height / 6 + kDefaultPadding;
 
-    return SizedBox(
-      width: size.width,
-      height: size.height / 2,
+    return Expanded(
       child: Stack(
         children: [
           Positioned(

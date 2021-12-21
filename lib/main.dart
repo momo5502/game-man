@@ -85,6 +85,8 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         });
       });
+
+      setState(() {});
     }
   }
 
@@ -256,18 +258,23 @@ class Header extends StatelessWidget {
                     ),
                   ),
                 ),
-                searchController.text.isEmpty
-                    ? const Icon(
-                        Icons.search_rounded,
-                        color: kPrimaryColor,
-                      )
-                    : GestureDetector(
-                        onTap: () => searchController.clear(),
-                        child: const Icon(
-                          Icons.clear_rounded,
-                          color: kPrimaryColor,
-                        ),
-                      ),
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 200),
+                  crossFadeState: searchController.text.isEmpty
+                      ? CrossFadeState.showFirst
+                      : CrossFadeState.showSecond,
+                  firstChild: const Icon(
+                    Icons.search_rounded,
+                    color: kPrimaryColor,
+                  ),
+                  secondChild: GestureDetector(
+                    onTap: () => searchController.clear(),
+                    child: const Icon(
+                      Icons.clear_rounded,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
