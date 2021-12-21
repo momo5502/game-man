@@ -5,8 +5,16 @@ import 'package:http/http.dart' as http;
 
 class DownloadObject {
   bool started = false;
+  Uint8List? data;
   Completer<Uint8List> completer = Completer<Uint8List>();
   DateTime insertionTime = DateTime.now();
+}
+
+class DownloadResult {
+  DownloadResult(this.future);
+
+  Uint8List? data;
+  Future<Uint8List> future;
 }
 
 class DownloadManager {
@@ -61,17 +69,18 @@ class DownloadManager {
     return result;
   }
 
-  void _startDownload(String url, Completer<Uint8List> completer) {
+  void _startDownload(String url, DownloadObject object) {
     final uri = Uri.parse(url);
     http.get(uri).then((response) {
       if (response.statusCode != 200) {
-        completer.completeError(response.statusCode);
+        object.completer.completeError(response.statusCode);
       } else {
-        completer.complete(response.bodyBytes);
+        object.data = response.bodyBytes;
+        object.completer.complete(response.bodyBytes);
       }
       _runTasks();
     }).catchError((e) {
-      completer.completeError(e);
+      object.completer.completeError(e);
       _runTasks();
     });
   }
@@ -101,7 +110,7 @@ class DownloadManager {
     final object = _objects[keyToDownload];
     object!.started = true;
 
-    _startDownload(keyToDownload, object.completer);
+    _startDownload(keyToDownload, object);
     return true;
   }
 
@@ -129,10 +138,19 @@ class DownloadManager {
     _triggerDownloads();
   }
 
-  Future<Uint8List> download(String url) {
+  DownloadResult _buildResult(DownloadObject object) {
+    final result = DownloadResult(object.completer.future);
+    if (object.completer.isCompleted && object.data != null) {
+      result.data = object.data;
+    }
+
+    return result;
+  }
+
+  DownloadResult download(String url) {
     final object = _getDownloadObject(url);
     _runTasks();
-    return object.completer.future;
+    return _buildResult(object);
   }
 }
 

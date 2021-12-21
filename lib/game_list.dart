@@ -45,25 +45,9 @@ Console _getConsoleFromUrl(String url) {
 }
 
 class GameList {
-  final List<Game> _games = [
-    Game(
-      Console.gameBoy,
-      "Tetris (JUE) (V1.0)",
-      "assets/images/tetris-jue-v1-0.webp",
-    ),
-    Game(
-      Console.gameBoyAdvance,
-      "Super Mario Advance 4 - Super Mario Bros. 3 (V1.1)",
-      "assets/images/super-mario-advance-4-super-mario-bros-3-v1-1.webp",
-    ),
-    Game(
-      Console.gameBoyAdvance,
-      "Pokemon - Fire Red Version [a1]",
-      "assets/images/pokemon-fire-red-version-v1-1.webp",
-    ),
-  ];
+  final List<Game> _games = [];
 
-  List<Game> getGames() {
+  List<Game> getDownloadedGames() {
     return _games;
   }
 

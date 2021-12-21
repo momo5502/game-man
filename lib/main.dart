@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:game_man/constants.dart';
 import 'package:game_man/download_widget.dart';
 import 'package:game_man/game_list.dart';
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
       builder: (context, child) {
         return ScrollConfiguration(
           behavior: NoGlowScrollBehavior(),
@@ -36,18 +37,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -55,6 +45,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GameList _gameList = GameList();
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_searchGames);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _searchController.removeListener(_searchGames);
+  }
+
   List<Game>? _games;
   String? _lastQuery;
 
@@ -64,7 +68,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _searchGames(String text) {
+  void _searchGames() {
+    final text = _searchController.text;
     _lastQuery = text;
     if (text.isEmpty) {
       _setGames(null);
@@ -86,6 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kBackgroundColor,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -94,12 +100,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         child: Stack(
           children: [
-            GameCards(games: _games ?? _gameList.getGames()),
-            Header(onSearch: _searchGames),
+            GameCards(games: _games ?? _gameList.getDownloadedGames()),
+            Header(searchController: _searchController),
           ],
         ),
       ),
-      bottomNavigationBar: Container(
+      /*bottomNavigationBar: Container(
         height: 60,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -111,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-      ),
+      ),*/
     );
   }
 }
@@ -132,7 +138,9 @@ class GameCards extends StatelessWidget {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const PlayerScreen(),
+              builder: (context) => PlayerScreen(
+                heroTag: game.image,
+              ),
             ));
       },
     );
@@ -151,6 +159,7 @@ class GameCards extends StatelessWidget {
             children:
                 games.map((game) => _buildGameCard(context, game)).toList(),
           ),
+          Container(height: kDefaultPadding),
         ],
       ),
     );
@@ -160,105 +169,133 @@ class GameCards extends StatelessWidget {
 class Header extends StatelessWidget {
   const Header({
     Key? key,
-    required this.onSearch,
+    required this.searchController,
   }) : super(key: key);
 
-  final ValueChanged<String> onSearch;
+  final TextEditingController searchController;
 
   @override
   Widget build(BuildContext context) {
     final Size size = MediaQuery.of(context).size;
 
-    return Container(
-      //margin: const EdgeInsets.only(bottom: kDefaultPadding * 2),
-      child: Stack(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: kDefaultPadding),
-            padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
-            height: size.height / 4.5,
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.33),
-                  offset: const Offset(0, 10),
-                  blurRadius: 20,
-                )
-              ],
-              gradient: kDefaultGradient,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(39),
-                bottomRight: Radius.circular(39),
-              ),
+    return Stack(
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: kDefaultPadding),
+          padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+          height: size.height / 4.5,
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.33),
+                offset: const Offset(0, 10),
+                blurRadius: 20,
+              )
+            ],
+            gradient: kDefaultGradient,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(39),
+              bottomRight: Radius.circular(39),
             ),
-            child: Center(
-              child: Row(
-                children: [
-                  const Spacer(),
-                  Text(
-                    'GameMan',
-                    style: GoogleFonts.quicksand(
-                      textStyle: Theme.of(context).textTheme.headline5,
-                      color: Colors.white,
-                      fontSize: 40,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Container(width: 10),
-                  const Icon(
-                    Icons.gamepad_rounded,
+          ),
+          child: Center(
+            child: Row(
+              children: [
+                const Spacer(),
+                Text(
+                  'GameMan',
+                  style: GoogleFonts.quicksand(
+                    textStyle: Theme.of(context).textTheme.headline5,
                     color: Colors.white,
-                    size: 30.0,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const Spacer(),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 54,
-              alignment: Alignment.center,
-              margin: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
-              padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
-              decoration: BoxDecoration(
+                ),
+                Container(width: 10),
+                const Icon(
+                  Icons.gamepad_rounded,
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      offset: const Offset(0, 10),
-                      blurRadius: 50,
-                      color: Colors.black.withOpacity(0.23),
-                    ),
-                  ]),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      onChanged: onSearch,
-                      decoration: InputDecoration(
-                        hintText: "Search",
-                        hintStyle: TextStyle(
-                          color: kPrimaryColor.withOpacity(0.5),
-                        ),
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const Icon(
-                    Icons.search_rounded,
-                    color: kPrimaryColor,
-                  ),
-                ],
-              ),
+                  size: 30.0,
+                ),
+                const Spacer(),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 54,
+            alignment: Alignment.center,
+            margin: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+            padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    offset: const Offset(0, 10),
+                    blurRadius: 50,
+                    color: Colors.black.withOpacity(0.23),
+                  ),
+                ]),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: "Search",
+                      hintStyle: TextStyle(
+                        color: kPrimaryColor.withOpacity(0.5),
+                      ),
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                    ),
+                  ),
+                ),
+                searchController.text.isEmpty
+                    ? const Icon(
+                        Icons.search_rounded,
+                        color: kPrimaryColor,
+                      )
+                    : GestureDetector(
+                        onTap: () => searchController.clear(),
+                        child: const Icon(
+                          Icons.clear_rounded,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+              ],
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Row(
+            children: [
+              TextButton(
+                onPressed: () {
+                  print("HI2");
+                },
+                child: SvgPicture.asset(
+                  "assets/icons/menu.svg",
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  print("HI");
+                },
+                child:
+                    const Icon(Icons.add_sharp, color: Colors.white, size: 30),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -324,7 +361,10 @@ class GameCard extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: kDefaultGradient,
                 ),
-                child: _getImage(),
+                child: Hero(
+                  child: _getImage(),
+                  tag: image,
+                ),
               ),
             ),
             Container(

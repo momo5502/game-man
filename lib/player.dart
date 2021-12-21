@@ -3,28 +3,34 @@ import 'package:flutter/services.dart';
 import 'package:game_man/constants.dart';
 
 class PlayerScreen extends StatelessWidget {
-  const PlayerScreen({Key? key}) : super(key: key);
+  const PlayerScreen({
+    Key? key,
+    required this.heroTag,
+  }) : super(key: key);
+
+  final String heroTag;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kBackgroundColor,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-        child: Scaffold(body: buildPlayer(context)),
+        child: buildPlayer(context, heroTag),
       ),
     );
   }
 }
 
-Widget buildPlayer(BuildContext context) {
+Widget buildPlayer(BuildContext context, String heroTag) {
   return Column(
-    children: const [
-      Screen(),
-      GamePad(),
+    children: [
+      Hero(child: const Screen(), tag: heroTag),
+      const GamePad(),
     ],
   );
 }
@@ -95,10 +101,16 @@ class GameButton extends StatelessWidget {
     return Container(
       width: kDefaultPadding * 2.5,
       height: kDefaultPadding * 2.5,
-      decoration: const BoxDecoration(
-        gradient: kDefaultGradient,
-        borderRadius: BorderRadius.all(Radius.circular(50)),
-      ),
+      decoration: BoxDecoration(
+          gradient: kDefaultGradient,
+          borderRadius: const BorderRadius.all(Radius.circular(50)),
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(0, 10),
+              blurRadius: 20,
+              color: Colors.black.withOpacity(0.23),
+            )
+          ]),
       child: Align(alignment: Alignment.center, child: child),
     );
   }
