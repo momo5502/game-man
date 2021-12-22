@@ -2,56 +2,39 @@ import 'package:html/dom.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart';
 
-enum Console {
-  unknown,
-  gameBoy,
-  gameBoyColor,
-  gameBoyAdvance,
-}
+import 'package:game_man/games/game.dart';
+import 'package:game_man/games/game_source.dart';
 
-class Game {
-  final Console console;
-  final String name;
-  final String image;
-
-  Game(this.console, this.name, this.image);
-}
-
-Console _getConsoleFromUrl(String url) {
-// https://static.emulatorgames.net/images/gameboy-advance/pokemon-ultra-violet.webp
+GameConsole _getConsoleFromUrl(String url) {
+  // https://static.emulatorgames.net/images/gameboy-advance/pokemon-ultra-violet.webp
   String regexString = r'^.+//static.emulatorgames.net/images/([^/]+)/.*$';
   RegExp regExp = RegExp(regexString);
   final matches = regExp.allMatches(url);
   if (matches.length != 1) {
-    return Console.unknown;
+    return GameConsole.unknown;
   }
 
   final match = matches.first;
   final group = match.group(1);
   final console = group.toString();
   if (console == "gameboy-advance") {
-    return Console.gameBoyAdvance;
+    return GameConsole.gameBoyAdvance;
   }
 
   if (console == "gameboy-color") {
-    return Console.gameBoyColor;
+    return GameConsole.gameBoyColor;
   }
 
   if (console == "gameboy") {
-    return Console.gameBoy;
+    return GameConsole.gameBoy;
   }
 
-  return Console.unknown;
+  return GameConsole.unknown;
 }
 
-class GameList {
-  final List<Game> _games = [];
-
-  List<Game> getDownloadedGames() {
-    return _games;
-  }
-
-  Future<List<Game>> searchGames(String text) async {
+class EmulatorNetSource extends GameSource {
+  @override
+  Future<GameList> searchGames(String text) async {
     var url = Uri.https('www.emulatorgames.net', '/search', {'kw': text});
 
     // Await the http get response, then decode the json-formatted response.
@@ -90,7 +73,7 @@ class GameList {
       }
 
       final console = _getConsoleFromUrl(imageUrl);
-      if (console == Console.unknown) {
+      if (console == GameConsole.unknown) {
         continue;
       }
 
@@ -104,5 +87,11 @@ class GameList {
     }
 
     return result;
+  }
+
+  @override
+  Future<void> downloadGame(Game game) {
+    // TODO: implement downloadGame
+    throw UnimplementedError();
   }
 }

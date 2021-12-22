@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:game_man/constants.dart';
 
-class PlayerScreen extends StatelessWidget {
-  const PlayerScreen({
+class PlayerPage extends StatelessWidget {
+  const PlayerPage({
     Key? key,
     required this.heroTag,
   }) : super(key: key);

@@ -18,13 +18,12 @@ class DownloadResult {
 }
 
 class DownloadManager {
-  final int _parallelLimit = 5;
-  final int _objectLimit = 100;
-  final HashMap<String, DownloadObject> _objects =
-      HashMap<String, DownloadObject>();
+  final _parallelLimit = 5;
+  final _objectLimit = 100;
+  final _objects = HashMap<Uri, DownloadObject>();
 
   bool _removeElement() {
-    String? keyToRemove;
+    Uri? keyToRemove;
     DateTime? insertionTime;
 
     for (final entry in _objects.entries) {
@@ -69,8 +68,7 @@ class DownloadManager {
     return result;
   }
 
-  void _startDownload(String url, DownloadObject object) {
-    final uri = Uri.parse(url);
+  void _startDownload(Uri uri, DownloadObject object) {
     http.get(uri).then((response) {
       if (response.statusCode != 200) {
         object.completer.completeError(response.statusCode);
@@ -86,7 +84,7 @@ class DownloadManager {
   }
 
   bool _triggerDownload() {
-    String? keyToDownload;
+    Uri? keyToDownload;
     DateTime? insertionTime;
 
     for (final entry in _objects.entries) {
@@ -122,7 +120,7 @@ class DownloadManager {
     }
   }
 
-  DownloadObject _getDownloadObject(String url) {
+  DownloadObject _getDownloadObject(Uri url) {
     var object = _objects[url];
     if (object != null) {
       return object;
@@ -148,7 +146,12 @@ class DownloadManager {
   }
 
   DownloadResult download(String url) {
-    final object = _getDownloadObject(url);
+    final uri = Uri.parse(url);
+    return downloadUri(uri);
+  }
+
+  DownloadResult downloadUri(Uri uri) {
+    final object = _getDownloadObject(uri);
     _runTasks();
     return _buildResult(object);
   }
