@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:game_man/components/game_cards.dart';
-import 'package:game_man/components/search_header.dart';
-import 'package:game_man/games/game.dart';
+import '../components/game_cards.dart';
+import '../components/search_header.dart';
+import '../games/game.dart';
 
 import '../constants.dart';
 import '../games/game_repository.dart';
@@ -33,6 +33,8 @@ class _GamePageState extends State<GamePage> {
 
     _gameRepository.localGames.addListener(_onLocalGamesChanged);
     _searchController.addListener(_searchGames);
+
+    _gameRepository.refreshLocalGames();
   }
 
   @override
@@ -90,7 +92,10 @@ class _GamePageState extends State<GamePage> {
         ),
         child: Stack(
           children: [
-            GameCards(games: _getGames()),
+            GameCards(
+              games: _getGames(),
+              gameRepository: _gameRepository,
+            ),
             SearchHeader(searchController: _searchController),
           ],
         ),

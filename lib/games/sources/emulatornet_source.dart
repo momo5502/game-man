@@ -172,14 +172,11 @@ Future<String> _determineDownloadUrl(Game game, String postId) async {
   return downloadUrl;
 }
 
-bool yay = false;
-
 class EmulatorNetSource extends GameSource {
   @override
   Future<GameList> searchGames(String text) async {
     var url = Uri.https('www.emulatorgames.net', '/search', {'kw': text});
 
-    // Await the http get response, then decode the json-formatted response.
     var response = await http.get(url);
     if (response.statusCode != 200) {
       return [];
@@ -201,11 +198,6 @@ class EmulatorNetSource extends GameSource {
       final game = _extractGame(element);
       if (game != null) {
         result.add(game);
-
-        if (!yay) {
-          downloadGame(game);
-          yay = true;
-        }
       }
     }
 
@@ -218,6 +210,9 @@ class EmulatorNetSource extends GameSource {
 
     final postId = await _fetchPostId(game);
     final downloadUrl = await _determineDownloadUrl(game, postId);
-    return Future.error("O");
+
+    final gameDownload = gDownloadManager.download(downloadUrl);
+
+    return GameDownload(await gameDownload.future, await imageDownload.future);
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:game_man/download_manager.dart';
+import '../download_manager.dart';
 
 enum DownloadWidgetStatus {
   uninitialized,

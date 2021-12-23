@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:game_man/constants.dart';
+import '../constants.dart';
 
 class PlayerPage extends StatelessWidget {
   const PlayerPage({
