@@ -144,7 +144,90 @@ class GamePad extends StatelessWidget {
               },
             ),
           ),
+          Positioned(
+            bottom: kDefaultPadding,
+            child: SizedBox(
+              width: size.width,
+              child: Align(
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    FlatGameButton(
+                      onDown: () {
+                        pressGbButton(7, true);
+                      },
+                      onUp: () {
+                        pressGbButton(7, false);
+                      },
+                      child: const Text(
+                        "SELECT",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      width: kDefaultPadding,
+                    ),
+                    FlatGameButton(
+                      onDown: () {
+                        pressGbButton(6, true);
+                      },
+                      onUp: () {
+                        pressGbButton(6, false);
+                      },
+                      child: const Text(
+                        "START",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class FlatGameButton extends StatelessWidget {
+  const FlatGameButton({
+    Key? key,
+    this.child,
+    required this.onDown,
+    required this.onUp,
+  }) : super(key: key);
+
+  final Widget? child;
+  final VoidCallback onDown;
+  final VoidCallback onUp;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (a) => onDown(),
+      onTapUp: (a) => onUp(),
+      child: Container(
+        width: kDefaultPadding * 2.5,
+        height: kDefaultPadding,
+        decoration: BoxDecoration(
+            gradient: kDefaultGradient,
+            borderRadius: const BorderRadius.all(Radius.circular(50)),
+            boxShadow: [
+              BoxShadow(
+                offset: const Offset(0, 10),
+                blurRadius: 20,
+                color: Colors.black.withOpacity(0.23),
+              )
+            ]),
+        child: Align(alignment: Alignment.center, child: child),
       ),
     );
   }
