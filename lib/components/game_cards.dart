@@ -77,7 +77,8 @@ class GameCards extends StatelessWidget {
             ));
   }
 
-  GameCard _buildGameCard(BuildContext context, Game game) {
+  GameCard _buildGameCard(
+      BuildContext context, Game game, GameRepository gameRepository) {
     return GameCard(
       isLocal: gameRepository.isLocalGame(game),
       image: game.image,
@@ -88,7 +89,8 @@ class GameCards extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => PlayerPage(
-                  heroTag: game.image,
+                  game: game,
+                  gameRepository: gameRepository,
                 ),
               ));
         } else {
@@ -115,8 +117,9 @@ class GameCards extends StatelessWidget {
           children: [
             Container(height: size.height / 4.5 + (kDefaultPadding * 2)),
             Wrap(
-              children:
-                  games.map((game) => _buildGameCard(context, game)).toList(),
+              children: games
+                  .map((game) => _buildGameCard(context, game, gameRepository))
+                  .toList(),
             ),
             Container(height: kDefaultPadding),
           ],

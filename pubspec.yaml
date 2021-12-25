@@ -40,6 +40,10 @@ dependencies:
   flutter_svg: ^1.0.0
   path: ^1.8.0
 
+  native_add:
+    path: ../native_add/
+  flutter_archive: ^4.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

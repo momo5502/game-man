@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_archive/flutter_archive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -15,6 +17,11 @@ Future<String> get _localPath async {
   final directory = await getApplicationDocumentsDirectory();
 
   return directory.path;
+}
+
+Future<String> get _cachePath async {
+  Directory tempDir = await getTemporaryDirectory();
+  return tempDir.path;
 }
 
 Future<String> get _romPath async {
@@ -59,6 +66,37 @@ class GameRepository {
     }
 
     return false;
+  }
+
+  Future<Uint8List> getGameRom(Game game) async {
+    if (!isLocalGame(game)) {
+      throw Exception("Game must have been downloaded");
+    }
+
+    final gamePath = p.join(await _romPath, game.identifier);
+    final romName = p.join(gamePath, "rom.dat");
+
+    String cacheDir = p.join(await _cachePath, "tempZip");
+    final cacheDirectory = Directory(cacheDir);
+    try {
+      await cacheDirectory.delete(recursive: true);
+    } catch (e) {}
+
+    await ZipFile.extractToDirectory(
+        zipFile: File(romName), destinationDir: cacheDirectory);
+
+    final entities = await cacheDirectory.list().toList();
+    final files = entities.whereType<File>().toList();
+    for (final file in files) {
+      if (file.path.endsWith(".gb") 
+        // ||file.path.endsWith(".gba")
+         //  ||file.path.endsWith(".gbc")
+          ) {
+        return await file.readAsBytes();
+      }
+    }
+
+    throw Exception("No rom found to load");
   }
 
   Future<void> deleteGame(Game game) async {
