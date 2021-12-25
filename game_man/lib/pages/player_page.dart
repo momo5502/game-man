@@ -10,43 +10,65 @@ import '../constants.dart';
 
 String activeGame = "";
 
-class PlayerPage extends StatelessWidget {
-  PlayerPage({
+class PlayerPage extends StatefulWidget {
+  const PlayerPage({
     Key? key,
     required this.game,
     required this.gameRepository,
-  }) : super(key: key) {
-    if (game.identifier != activeGame) {
-      activeGame = game.identifier;
-      gameRepository.getGameRom(game).then((rom) {
-        loadGbRom(rom);
-      });
-    }
-  }
+  }) : super(key: key);
 
   final Game game;
   final GameRepository gameRepository;
 
   @override
+  State<PlayerPage> createState() => _PlayerPageState();
+}
+
+class _PlayerPageState extends State<PlayerPage>
+    with SingleTickerProviderStateMixin {
+  bool run = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1)).then((value) {
+      widget.gameRepository.getGameRom(widget.game).then((rom) {
+        loadGbRom(rom);
+        setState(() {
+          run = true;
+        });
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackgroundColor,
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
+    return WillPopScope(
+      child: Scaffold(
+        backgroundColor: kBackgroundColor,
+        body: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
+          child: buildPlayer(context, widget.game.image, run),
         ),
-        child: buildPlayer(context, game.image),
       ),
+      onWillPop: () {
+        setState(() {
+          run = false;
+        });
+        return Future.value(true);
+      },
     );
   }
 }
 
-Widget buildPlayer(BuildContext context, String heroTag) {
+Widget buildPlayer(BuildContext context, String heroTag, bool run) {
   return Column(
     children: [
-      Hero(child: const Screen(), tag: heroTag),
+      Hero(child: Screen(run: run), tag: heroTag),
       const GamePad(),
     ],
   );
@@ -327,7 +349,10 @@ class IconGameButton extends StatelessWidget {
 class Screen extends StatelessWidget {
   const Screen({
     Key? key,
+    required this.run,
   }) : super(key: key);
+
+  final bool run;
 
   @override
   Widget build(BuildContext context) {
@@ -346,12 +371,14 @@ class Screen extends StatelessWidget {
         ],
         gradient: kDefaultGradient,
       ),
-      child: const SafeArea(
+      child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(kDefaultPadding),
+          padding: const EdgeInsets.all(kDefaultPadding),
           child: Align(
             alignment: Alignment.topCenter,
-            child: LCDWidget(),
+            child: LCDWidget(
+              run: run,
+            ),
           ),
         ),
       ),
@@ -362,7 +389,10 @@ class Screen extends StatelessWidget {
 class LCDWidget extends StatefulWidget {
   const LCDWidget({
     Key? key,
+    required this.run,
   }) : super(key: key);
+
+  final bool run;
 
   @override
   State<LCDWidget> createState() => LCDState();
@@ -371,21 +401,25 @@ class LCDWidget extends StatefulWidget {
 class LCDState extends State<LCDWidget> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
-      setState(() {});
-    });
+    if (widget.run) {
+      WidgetsBinding.instance?.addPostFrameCallback((_) {
+        setState(() {});
+      });
+    }
 
     return CustomPaint(
-        isComplex: true, willChange: true, painter: LCDPainter());
+        isComplex: true, willChange: true, painter: LCDPainter(widget.run));
   }
 }
 
 /// LCD painter is used to copy the LCD data from the gameboy PPU to the screen.
 class LCDPainter extends CustomPainter {
+  final bool run;
+
   /// Indicates if the LCD is drawing new content
   bool drawing = false;
 
-  LCDPainter();
+  LCDPainter(this.run);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -427,6 +461,6 @@ class LCDPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(LCDPainter oldDelegate) {
-    return !drawing;
+    return !drawing && run;
   }
 }
