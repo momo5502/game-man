@@ -8,16 +8,18 @@
 #include "gb/game_boy.hpp"
 
 #include <android/log.h>
-#include <GLES3/gl31.h>
-#include <android/native_window.h>
-#include <android/native_window_jni.h>
+
 
 #include "gb/utils/utils.hpp"
+#include "gb/utils/finally.hpp"
 #include "egl_thread_surface.h"
 
 #include <dlfcn.h>
+#include "flutter_window.h"
+#include "texture_2d.h"
 
-EGLNativeWindowType window{};
+std::mutex window_mutex;
+flutter_window window{};
 
 class joypad_mobile : public joypad {
 public:
@@ -67,27 +69,14 @@ private:
     std::atomic<bool> states[8]{};
 };
 
-typedef struct
-{
-
-    // Attribute locations
-    GLint positionLoc;
-    GLint texCoordLoc;
-
-    // Sampler location
-    GLint samplerLoc;
-
-} UserData;
-
 class game_boy_mobile_egl : public display
 {
 public:
     std::unique_ptr<egl_thread_surface> thread_surface_{};
+    std::unique_ptr<texture_2d> texture_;
+    
     joypad_mobile joypad{};
     game_boy gb;
-    GLuint program;
-    GLuint texture;
-    UserData user;
     std::thread runner;
 
     game_boy_mobile_egl()
@@ -103,128 +92,18 @@ public:
         }
     }
 
-    void createTexture() {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        char buffer[GB_WIDTH * GB_HEIGHT * 4]{};
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, GB_WIDTH, GB_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-
-
-
-
-
-
-
-
-
-
-
-
-        // Create shaders
-        GLint v_shader = glCreateShader(GL_VERTEX_SHADER);
-        GLint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    const GLchar* vShaderStr =
-        "attribute vec4 a_position;   \n"
-        "attribute vec2 a_texCoord;   \n"
-        "varying vec2 v_texCoord;     \n"
-        "void main()                  \n"
-        "{                            \n"
-        "   gl_Position = a_position; \n"
-        "   v_texCoord = a_texCoord;  \n"
-        "}                            \n";
-
-    const GLchar* fShaderStr =
-        "precision mediump float;                            \n"
-        "varying vec2 v_texCoord;                            \n"
-        "uniform sampler2D s_texture;                        \n"
-        "void main()                                         \n"
-        "{                                                   \n"
-        "  gl_FragColor = texture2D( s_texture, v_texCoord );\n"
-        "}                                                   \n";
-
-        glShaderSource(v_shader, 1, &vShaderStr, 0);
-        glShaderSource(f_shader, 1, &fShaderStr, 0);
-        glCompileShader(v_shader);
-        glCompileShader(f_shader);
-
-        this->program = glCreateProgram();
-        glAttachShader(this->program, v_shader);
-        glAttachShader(this->program, f_shader);
-        glLinkProgram(this->program);
-
-        glDeleteShader(v_shader);
-        glDeleteShader(f_shader);
-
-        user.positionLoc = glGetAttribLocation(program, "a_position");
-        user.texCoordLoc = glGetAttribLocation(program, "a_texCoord");
-        user.samplerLoc = glGetUniformLocation(program, "s_texture");
-    }
-
     void draw_frame(const color* buffer/* GB_WIDTH * GB_HEIGHT */) override {
-        if (!this->thread_surface_) {
+        if (!this->thread_surface_ || !this->texture_) {
             return;
         }
 
-        //glViewport(0, 0, GB_WIDTH, GB_HEIGHT);
+        glViewport(0, 0, GB_WIDTH * 2, GB_HEIGHT * 2);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glBindTexture(GL_TEXTURE_2D, this->texture);
-
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GB_WIDTH, GB_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-        
-
-
-
-
-
-
-            GLfloat vVertices[] = { -1.0f,  1.0f, 0.0f,  // Position 0
-                            0.0f,  0.0f,        // TexCoord 0
-                           -1.0f, -1.0f, 0.0f,  // Position 1
-                            0.0f,  1.0f,        // TexCoord 1
-                            1.0f, -1.0f, 0.0f,  // Position 2
-                            1.0f,  1.0f,        // TexCoord 2
-                            1.0f,  1.0f, 0.0f,  // Position 3
-                            1.0f,  0.0f         // TexCoord 3
-                         };
-    GLushort indices[] =
-    { 0, 1, 2, 0, 2, 3 };
-
-    // Set the viewport
-    glViewport(0, 0, GB_WIDTH * 2, GB_HEIGHT * 2);
-
-    // Clear the color buffer
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Use the program object
-    glUseProgram(program);
-
-    // Load the vertex position
-    glVertexAttribPointer(user.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vVertices);
-    // Load the texture coordinate
-    glVertexAttribPointer(user.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &vVertices[3]);
-
-    glEnableVertexAttribArray(user.positionLoc);
-    glEnableVertexAttribArray(user.texCoordLoc);
-
-    // Bind the texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // Set the sampler texture unit to 0
-    glUniform1i(user.samplerLoc, 0);
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+        this->texture_->update(buffer);
+        this->texture_->draw();
 
         this->thread_surface_->swap_buffers();
     }
@@ -240,16 +119,36 @@ public:
         std::vector<uint8_t> buffer{};
         buffer.assign(start, start + size);
 
-        this->runner = std::thread([this, b = std::move(buffer)]() {
+        this->runner = std::thread([this, b = std::move(buffer)]()
+        {
+            while (true)
+            {
+                {
+                    std::lock_guard<std::mutex> _(window_mutex);
+                    if(window)
+                    {
+                        break;
+                    }
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+
             this->work(std::move(b));
         });
     }
 
 private:
-    void work(std::vector<uint8_t> buffer) {
-        this->thread_surface_ = std::make_unique<egl_thread_surface>(window);
+    void work(std::vector<uint8_t> buffer)
+    {
+        const auto _ = utils::finally([this]()
+        {
+            this->texture_ = {};
+            this->thread_surface_ = {};
+        });
 
-        createTexture();
+        this->thread_surface_ = std::make_unique<egl_thread_surface>(window);
+        this->texture_ = std::make_unique<texture_2d>(GB_WIDTH, GB_HEIGHT);
 
         gb.load_rom(std::move(buffer));
         gb.skip_bios();
@@ -282,7 +181,7 @@ load_rom(void* data, uint64_t size)
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
 void Java_com_example_native_1add_OpenglTexturePlugin_nativeSetSurface(JNIEnv * jenv, jobject obj, jobject surface) {
-    __android_log_write(ANDROID_LOG_INFO, "term", "YEEEEEEEEEEEEEEEEDSSSS");
-    window = ANativeWindow_fromSurface(jenv, surface);
-    __android_log_write(ANDROID_LOG_INFO, "term", utils::va("Window: %p", window));
+    __android_log_write(ANDROID_LOG_INFO, "gbegl", "Set surface");
+    std::lock_guard<std::mutex> _(window_mutex);
+    window = flutter_window(jenv, surface);
 }

@@ -2,7 +2,8 @@
 #include "gb/utils/finally.hpp"
 #include <stdexcept>
 
-egl_thread_surface::egl_thread_surface(EGLNativeWindowType window)
+egl_thread_surface::egl_thread_surface(flutter_window window)
+    : window_(std::move(window))
 {
     auto cleanup = utils::finally([this]()
     {
@@ -51,7 +52,7 @@ egl_thread_surface::egl_thread_surface(EGLNativeWindowType window)
         throw std::runtime_error("eglCreateContext failed");
     }
 
-    this->surface_ = eglCreateWindowSurface(this->display_, config, window, nullptr);
+    this->surface_ = eglCreateWindowSurface(this->display_, config, this->window_, nullptr);
     if (!this->surface_ || this->surface_ == EGL_NO_SURFACE)
     {
         throw std::runtime_error("eglCreateWindowSurface failed");
@@ -80,17 +81,20 @@ void egl_thread_surface::release()
     this->surface_ = EGL_NO_SURFACE;
     this->context_ = EGL_NO_CONTEXT;
 
-    if(display == EGL_NO_DISPLAY) {
+    if (display == EGL_NO_DISPLAY)
+    {
         return;
     }
 
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-    if(surface != EGL_NO_SURFACE) {
+    if (surface != EGL_NO_SURFACE)
+    {
         eglDestroySurface(display, surface);
     }
 
-    if(context != EGL_NO_CONTEXT) {
+    if (context != EGL_NO_CONTEXT)
+    {
         eglDestroyContext(display, context);
     }
 

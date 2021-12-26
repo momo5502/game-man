@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.4.1)  # for example
 
 add_library(native_add  SHARED
     ../ios/Classes/egl_thread_surface.cpp
+    ../ios/Classes/flutter_window.cpp
+    ../ios/Classes/texture_2d.cpp
     ../ios/Classes/native_add.cpp
     ../ios/Classes/gb/cpu.cpp
     ../ios/Classes/gb/game_boy.cpp
