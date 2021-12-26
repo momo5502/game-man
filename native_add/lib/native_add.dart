@@ -42,15 +42,6 @@ void Function(Pointer<Uint8>, int) getLoadRomFunc() {
   return loadRom!;
 }
 
-Uint32List? getFrameBuffer() {
-  final buffer = getGetbufferFunc()();
-  if (buffer.address == 0) {
-    return null;
-  }
-
-  return buffer.asTypedList(160 * 144);
-}
-
 void pressGbButton(int id, bool value) {
   getPressButtonFunc()(id, value);
 }

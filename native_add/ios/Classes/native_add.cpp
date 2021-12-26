@@ -8,16 +8,15 @@
 #include "gb/game_boy.hpp"
 
 #include <android/log.h>
-#include <EGL/egl.h>
 #include <GLES3/gl31.h>
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 
 #include "gb/utils/utils.hpp"
+#include "egl_thread_surface.h"
 
 #include <dlfcn.h>
 
-bool done = false;
 EGLNativeWindowType window{};
 
 class joypad_mobile : public joypad {
@@ -68,73 +67,6 @@ private:
     std::atomic<bool> states[8]{};
 };
 
-class display_mobile : public display {
-public:
-    void draw_frame(const color* buffer/* GB_WIDTH * GB_HEIGHT */) override {
-        memcpy(data, buffer, sizeof(data));
-        available.store(true);
-    }
-
-    void* get_data() {
-        if (available.load()) {
-            available.store(false);
-        }
-        return data;
-    }
-
-    void set_title(std::string title) override {
-        __android_log_write(ANDROID_LOG_INFO, "gb", title.data());
-    }
-
-private:
-    static color data[GB_WIDTH * GB_HEIGHT];
-    std::atomic<bool> available{ false };
-};
-
-color display_mobile::data[GB_WIDTH * GB_HEIGHT]{};
-
-class game_boy_mobile
-{
-public:
-    display_mobile display{};
-    joypad_mobile joypad{};
-    game_boy gb;
-    std::thread runner;
-
-    game_boy_mobile()
-        : gb(&joypad, &display)
-    {
-
-    }
-
-    ~game_boy_mobile() {
-        gb.turn_off();
-        if (runner.joinable()) {
-            runner.join();
-        }
-    }
-
-    void run(void* data, uint64_t size)
-    {
-        std::atomic<bool> running{ false };
-        runner = std::thread([&running, this, data, size]() {
-            uint8_t* start = reinterpret_cast<uint8_t*>(data);
-            std::vector<uint8_t> data;
-            data.assign(start, start + size);
-
-            gb.load_rom(std::move(data));
-            gb.skip_bios();
-            running = true;
-            gb.run();
-            __android_log_write(ANDROID_LOG_INFO, "term", "Terminating!");
-            });
-
-        while (!running) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    }
-};
-
 typedef struct
 {
 
@@ -150,9 +82,7 @@ typedef struct
 class game_boy_mobile_egl : public display
 {
 public:
-    bool running{ false };
-    EGLDisplay display{ EGL_NO_DISPLAY };
-    EGLSurface surface{ EGL_NO_SURFACE };
+    std::unique_ptr<egl_thread_surface> thread_surface_{};
     joypad_mobile joypad{};
     game_boy gb;
     GLuint program;
@@ -182,9 +112,6 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
         char buffer[GB_WIDTH * GB_HEIGHT * 4]{};
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, GB_WIDTH, GB_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
@@ -204,7 +131,7 @@ public:
         GLint v_shader = glCreateShader(GL_VERTEX_SHADER);
         GLint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    GLchar* vShaderStr =
+    const GLchar* vShaderStr =
         "attribute vec4 a_position;   \n"
         "attribute vec2 a_texCoord;   \n"
         "varying vec2 v_texCoord;     \n"
@@ -214,7 +141,7 @@ public:
         "   v_texCoord = a_texCoord;  \n"
         "}                            \n";
 
-    GLchar* fShaderStr =
+    const GLchar* fShaderStr =
         "precision mediump float;                            \n"
         "varying vec2 v_texCoord;                            \n"
         "uniform sampler2D s_texture;                        \n"
@@ -242,7 +169,7 @@ public:
     }
 
     void draw_frame(const color* buffer/* GB_WIDTH * GB_HEIGHT */) override {
-        if (!running) {
+        if (!this->thread_surface_) {
             return;
         }
 
@@ -299,7 +226,7 @@ public:
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-    eglSwapBuffers(display, surface);
+        this->thread_surface_->swap_buffers();
     }
 
     void set_title(std::string title) override {
@@ -308,87 +235,21 @@ public:
 
     void run(void* data, uint64_t size)
     {
-        std::atomic<bool> running{ false };
-        runner = std::thread([&running, this, data, size]() {
-            uint8_t* start = reinterpret_cast<uint8_t*>(data);
-            std::vector<uint8_t> buffer;
-            buffer.assign(start, start + size);
-            running = true;
+        uint8_t* start = reinterpret_cast<uint8_t*>(data);
 
-            this->work(std::move(buffer));
+        std::vector<uint8_t> buffer{};
+        buffer.assign(start, start + size);
 
-            __android_log_write(ANDROID_LOG_INFO, "term", "Terminating!");
-            });
-
-        while (!running) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        this->runner = std::thread([this, b = std::move(buffer)]() {
+            this->work(std::move(b));
+        });
     }
 
 private:
-    void init_gl()
-    {
-        running = false;
-
-        __android_log_write(ANDROID_LOG_INFO, "term", "iniiit");
-
-        display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-        if (display == EGL_NO_DISPLAY) {
-            __android_log_write(ANDROID_LOG_INFO, "term", "No display!");
-            return;
-        }
-
-        EGLint version[2];
-        if (!eglInitialize(display, &version[0], &version[1])) {
-            __android_log_write(ANDROID_LOG_INFO, "term", "No init!");
-            return;
-        }
-
-        EGLConfig config{};
-        EGLint num_configs{};
-        EGLint attributes[] = {
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,    //Request opengl ES2.0
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_BLUE_SIZE, 8,
-            EGL_GREEN_SIZE, 8,
-            EGL_RED_SIZE, 8,
-            EGL_DEPTH_SIZE, 24,
-            EGL_NONE
-        };
-
-        eglChooseConfig(display, attributes, &config, 1, &num_configs);
-
-        if (!num_configs) {
-            __android_log_write(ANDROID_LOG_INFO, "term", utils::va("No config: %X!", eglGetError()));
-            return;
-        }
-
-        EGLint attributes2[] = {
-            EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE,
-        };
-
-        auto context = eglCreateContext(display, config, EGL_NO_CONTEXT, attributes2);
-
-        surface = eglCreateWindowSurface(display, config, window, nullptr);
-
-        if (!surface || surface == EGL_NO_SURFACE) {
-            __android_log_write(ANDROID_LOG_INFO, "term", "No surface!");
-            return;
-        }
-
-        if (!eglMakeCurrent(display, surface, surface, context)) {
-            __android_log_write(ANDROID_LOG_INFO, "term", "current failed!");
-            return;
-        }
+    void work(std::vector<uint8_t> buffer) {
+        this->thread_surface_ = std::make_unique<egl_thread_surface>(window);
 
         createTexture();
-
-        running = true;
-        __android_log_write(ANDROID_LOG_INFO, "term", "run!");
-    }
-
-    void work(std::vector<uint8_t> buffer) {
-        init_gl();
 
         gb.load_rom(std::move(buffer));
         gb.skip_bios();
@@ -398,7 +259,6 @@ private:
 };
 
 std::mutex m;
-std::unique_ptr<game_boy_mobile> mobile_gb{};
 std::unique_ptr<game_boy_mobile_egl> mobile_gb_egl{};
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
@@ -409,18 +269,6 @@ press_button(int id, bool value)
     if (mobile_gb_egl) {
         mobile_gb_egl->joypad.set_state(id, value);
     }
-}
-
-extern "C" __attribute__((visibility("default"))) __attribute__((used))
-void*
-get_buffer()
-{
-    std::lock_guard<std::mutex> _(m);
-    //if(!mobile_gb) {
-    return nullptr;
-    //}
-
-    //return mobile_gb->display.get_data();
 }
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
@@ -438,11 +286,3 @@ void Java_com_example_native_1add_OpenglTexturePlugin_nativeSetSurface(JNIEnv * 
     window = ANativeWindow_fromSurface(jenv, surface);
     __android_log_write(ANDROID_LOG_INFO, "term", utils::va("Window: %p", window));
 }
-
-static struct xxx {
-    xxx() {
-        __android_log_write(ANDROID_LOG_INFO, "term", "Init");
-        auto* sym = dlsym(RTLD_DEFAULT, "Java_com_example_native_1add_OpenglTexturePlugin_nativeSetSurface");
-        __android_log_write(ANDROID_LOG_INFO, "term", utils::va("Sym: %p %p", sym, Java_com_example_native_1add_OpenglTexturePlugin_nativeSetSurface));
-    }
-} _xx;
