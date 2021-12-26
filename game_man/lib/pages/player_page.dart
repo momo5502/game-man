@@ -56,7 +56,7 @@ class _PlayerPageState extends State<PlayerPage>
   void initState() {
     super.initState();
     widget.controller.initialize(160 * 2, 144 * 2);
-    Future.delayed(const Duration(milliseconds: 100)).then((value) {
+    Future.delayed(const Duration(milliseconds: 500)).then((value) {
       widget.gameRepository.getGameRom(widget.game).then((rom) {
         loadGbRom(rom);
         setState(() {
