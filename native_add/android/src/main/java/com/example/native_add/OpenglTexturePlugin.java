@@ -7,6 +7,8 @@ import android.view.Surface;
 
 import java.util.Map;
 
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
@@ -14,21 +16,39 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.TextureRegistry;
 
-public class OpenglTexturePlugin implements MethodCallHandler {
+public class OpenglTexturePlugin implements FlutterPlugin, MethodCallHandler {
     static {
         System.loadLibrary("native_add");
     }
 
-    private final TextureRegistry textures;
+    private MethodChannel channel;
+    private TextureRegistry textures;
 
-    public OpenglTexturePlugin(TextureRegistry textures) {
+    void setTextures(TextureRegistry textures)
+    {
         this.textures = textures;
     }
 
+    private static void setup(OpenglTexturePlugin plugin, BinaryMessenger binaryMessenger, TextureRegistry textures) {
+        plugin.setTextures(textures);
+
+        plugin.channel = new MethodChannel(binaryMessenger, "opengl_texture");
+        plugin.channel.setMethodCallHandler(plugin);
+    }
+
+    @Override
+    public void onAttachedToEngine(FlutterPluginBinding flutterPluginBinding) {
+        setup(this, flutterPluginBinding.getBinaryMessenger(), flutterPluginBinding.getTextureRegistry());
+    }
+
+    @Override
+    public void onDetachedFromEngine(FlutterPluginBinding flutterPluginBinding)
+    {
+        // TODO
+    }
+
     public static void registerWith(Registrar registrar) {
-        Log.i("OpenglTexturePlugin", "INITTT");
-        final MethodChannel channel = new MethodChannel(registrar.messenger(), "opengl_texture");
-        channel.setMethodCallHandler(new OpenglTexturePlugin(registrar.textures()));
+        setup(new OpenglTexturePlugin(), registrar.messenger(), registrar.textures());
     }
 
     @Override
