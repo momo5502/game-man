@@ -30,7 +30,7 @@ flutter:
     platforms:
       android:
         package: com.example.native_add
-        pluginClass: NativeAddPlugin
+        pluginClass: OpenglTexturePlugin
       ios:
         pluginClass: NativeAddPlugin
 

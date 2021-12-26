@@ -10,8 +10,30 @@ import '../constants.dart';
 
 String activeGame = "";
 
+class OpenGLTextureController {
+  static const MethodChannel _channel = MethodChannel('opengl_texture');
+
+  int? textureId;
+
+  Future<int> initialize(double width, double height) async {
+    getDynamicLib();
+
+    textureId = await _channel.invokeMethod('create', {
+      'width': width,
+      'height': height,
+    });
+    print("Id: $textureId");
+    return textureId!;
+  }
+
+  Future<Null> dispose() =>
+      _channel.invokeMethod('dispose', {'textureId': textureId});
+
+  bool get isInitialized => textureId != null;
+}
+
 class PlayerPage extends StatefulWidget {
-  const PlayerPage({
+  PlayerPage({
     Key? key,
     required this.game,
     required this.gameRepository,
@@ -19,6 +41,8 @@ class PlayerPage extends StatefulWidget {
 
   final Game game;
   final GameRepository gameRepository;
+
+  final OpenGLTextureController controller = OpenGLTextureController();
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -31,7 +55,8 @@ class _PlayerPageState extends State<PlayerPage>
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1)).then((value) {
+    widget.controller.initialize(160 * 2, 144 * 2);
+    Future.delayed(const Duration(milliseconds: 100)).then((value) {
       widget.gameRepository.getGameRom(widget.game).then((rom) {
         loadGbRom(rom);
         setState(() {
@@ -52,7 +77,8 @@ class _PlayerPageState extends State<PlayerPage>
             statusBarIconBrightness: Brightness.light,
             statusBarBrightness: Brightness.dark,
           ),
-          child: buildPlayer(context, widget.game.image, run),
+          child:
+              buildPlayer(context, widget.game.image, run, widget.controller),
         ),
       ),
       onWillPop: () {
@@ -65,10 +91,16 @@ class _PlayerPageState extends State<PlayerPage>
   }
 }
 
-Widget buildPlayer(BuildContext context, String heroTag, bool run) {
+Widget buildPlayer(BuildContext context, String heroTag, bool run,
+    OpenGLTextureController controller) {
   return Column(
     children: [
-      Hero(child: Screen(run: run), tag: heroTag),
+      Hero(
+          child: Screen(
+            run: run,
+            controller: controller,
+          ),
+          tag: heroTag),
       const GamePad(),
     ],
   );
@@ -350,9 +382,11 @@ class Screen extends StatelessWidget {
   const Screen({
     Key? key,
     required this.run,
+    required this.controller,
   }) : super(key: key);
 
   final bool run;
+  final OpenGLTextureController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -372,14 +406,18 @@ class Screen extends StatelessWidget {
         gradient: kDefaultGradient,
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(kDefaultPadding),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: LCDWidget(
+        child: Align(
+          alignment: Alignment.center,
+          child: controller.isInitialized
+              ? SizedBox(
+                  width: 160 * 2,
+                  height: 144 * 2,
+                  child: Texture(textureId: controller.textureId!),
+                )
+              : null,
+          /*LCDWidget(
               run: run,
-            ),
-          ),
+            ),*/
         ),
       ),
     );
