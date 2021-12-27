@@ -171,7 +171,7 @@ void cpu::setup_operations()
 	// STOP
 	this->operations_[0x10] = [](game_boy*)
 	{
-		throw std::runtime_error("Stop not implemented!");
+		//throw std::runtime_error("Stop not implemented!");
 	};
 
 	// LD DE,nn
@@ -483,7 +483,7 @@ void cpu::setup_operations()
 	// ADD HL,SP
 	this->operations_[0x39] = [](game_boy* gb)
 	{
-		gb->get_cpu()->add_hl(gb->get_cpu()->registers.hl);
+		gb->get_cpu()->add_hl(gb->get_cpu()->registers.sp);
 	};
 
 	// LDD A,(HL)
@@ -1415,8 +1415,9 @@ void cpu::setup_operations()
 	// CALL nn
 	this->operations_[0xCD] = [](game_boy* gb)
 	{
-		gb->get_cpu()->stack_push_word(gb->get_cpu()->registers.pc + 2);
-		gb->get_cpu()->registers.pc = gb->get_cpu()->read_program_word();
+	        const uint16_t call_loc = gb->get_cpu()->read_program_word();
+		gb->get_cpu()->stack_push_word(gb->get_cpu()->registers.pc);
+		gb->get_cpu()->registers.pc = call_loc;
 	};
 
 	// ADC A,n
@@ -1588,9 +1589,7 @@ void cpu::setup_operations()
 	// ADD SP,d
 	this->operations_[0xE8] = [](game_boy* gb)
 	{
-		gb->get_cpu()->registers.f = 0;
-
-		const uint16_t value = gb->get_cpu()->read_program_byte();
+		const int8_t value = gb->get_cpu()->read_program_byte();
 		const int32_t result = gb->get_cpu()->registers.sp + value;
 
 		gb->get_cpu()->registers.f = 0;
@@ -1670,6 +1669,23 @@ void cpu::setup_operations()
 	this->operations_[0xF7] = [](game_boy* gb)
 	{
 		gb->get_cpu()->execute_rst(0x30);
+	};
+
+	// LD HL,SP+r8
+	this->operations_[0xF8] = [](game_boy* gb)
+	{
+	        const int8_t value = gb->get_cpu()->read_program_byte();
+                const int32_t result = gb->get_cpu()->registers.sp + value;
+
+	  	gb->get_cpu()->registers.f = 0;
+		if (((gb->get_cpu()->registers.sp ^ value ^ (result & 0xFFFF)) & 0x100) == 0x100)
+			gb->get_cpu()->registers.f |=
+				flag_carry;
+		if (((gb->get_cpu()->registers.sp ^ value ^ (result & 0xFFFF)) & 0x10) == 0x10)
+			gb->get_cpu()->registers.f |=
+				flag_half_carry;
+
+	        gb->get_cpu()->registers.hl = static_cast<uint16_t>(result & 0xffff);
 	};
 
 	// LD SP,HL
@@ -3064,7 +3080,7 @@ void cpu::adc(const uint8_t reg)
 {
 	const uint32_t carry = (this->registers.f & flag_carry) ? 1 : 0;
 	const uint32_t result = this->registers.a + reg + carry;
-	const uint8_t result_8 = static_cast<uint8_t>(result);
+	const auto result_8 = static_cast<uint8_t>(result);
 
 	this->registers.f = 0;
 	if (result > 0xFF) this->registers.f |= flag_carry;
@@ -3197,7 +3213,7 @@ void cpu::sra(uint8_t* reg)
 
 void cpu::swap(uint8_t* reg)
 {
-	*reg = ((*reg & 0x0F) << 4) | ((*reg >> 4) & 0x0F);
+	*reg = static_cast<uint8_t>(((*reg & 0x0F) << 4) | ((*reg >> 4) & 0x0F));
 	this->registers.f = !*reg ? flag_zero : 0;
 }
 
@@ -3225,9 +3241,9 @@ uint8_t cpu::read_program_byte()
 
 uint16_t cpu::read_program_word()
 {
-	const uint16_t low = this->read_program_byte();
-	const uint16_t high = this->read_program_byte();
-	return low | (high << 8);
+	const uint32_t low = this->read_program_byte() & 0xFF;
+	const uint32_t high = this->read_program_byte() & 0xFF;
+	return static_cast<uint16_t>(low | (high << 8));
 }
 
 void cpu::stack_push_word(const uint16_t value)
