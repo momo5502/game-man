@@ -128,11 +128,11 @@ private:
 
 	void bit(uint8_t reg, uint8_t _bit);
 
-	void rlc(uint8_t* reg);
-	void rrc(uint8_t* reg);
+	void rlc(uint8_t* reg, bool check_a = true);
+	void rrc(uint8_t* reg, bool check_a = true);
 
-	void rl(uint8_t* reg);
-	void rr(uint8_t* reg);
+	void rl(uint8_t* reg, bool check_a = true);
+	void rr(uint8_t* reg, bool check_a = true);
 
 	void sla(uint8_t* reg);
 	void sra(uint8_t* reg);
