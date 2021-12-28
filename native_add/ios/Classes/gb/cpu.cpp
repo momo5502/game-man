@@ -71,6 +71,15 @@ cpu::cpu(game_boy* game_boy) : ime_(true), gb_(game_boy)
 
 cpu::~cpu() = default;
 
+void cpu::serialize(utils::binary_buffer& buffer)
+{
+  this->timer.serialize(buffer);
+  buffer.handle(this->registers);
+  buffer.handle(this->ime_);
+  buffer.handle(this->sav_registers_);
+  buffer.handle(this->halted_);
+}
+
 void cpu::setup_operations()
 {
 	// NOP

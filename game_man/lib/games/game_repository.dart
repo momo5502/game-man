@@ -68,6 +68,26 @@ class GameRepository {
     return false;
   }
 
+  Future<void> storeState(Game game, Uint8List state) async {
+    if (!isLocalGame(game)) {
+      throw Exception("Game must have been downloaded");
+    }
+
+    final gamePath = p.join(await _romPath, game.identifier);
+    final saveName = p.join(gamePath, "save.dat");
+    await File(saveName).writeAsBytes(state);
+  }
+
+  Future<Uint8List> loadState(Game game) async {
+    if (!isLocalGame(game)) {
+      throw Exception("Game must have been downloaded");
+    }
+
+    final gamePath = p.join(await _romPath, game.identifier);
+    final saveName = p.join(gamePath, "save.dat");
+    return await File(saveName).readAsBytes();
+  }
+
   Future<Uint8List> getGameRom(Game game) async {
     if (!isLocalGame(game)) {
       throw Exception("Game must have been downloaded");
@@ -88,10 +108,9 @@ class GameRepository {
     final entities = await cacheDirectory.list().toList();
     final files = entities.whereType<File>().toList();
     for (final file in files) {
-      if (file.path.endsWith(".gb") 
-        // ||file.path.endsWith(".gba")
-         //  ||file.path.endsWith(".gbc")
-          ) {
+      if (file.path.endsWith(".gb") ||
+          file.path.endsWith(".gba") ||
+          file.path.endsWith(".gbc")) {
         return await file.readAsBytes();
       }
     }

@@ -2,11 +2,20 @@
 #include "timer.hpp"
 #include "game_boy.hpp"
 
-timer::timer() : div(0), tma(0), tima(0), tac(0), main_clock(0), sub_clock(0), div_clock(0)
-{
-}
-
+timer::timer() = default;
 timer::~timer() = default;
+
+
+void timer::serialize(utils::binary_buffer& buffer)
+{
+  buffer.handle(this->div);
+  buffer.handle(this->tma);
+  buffer.handle(this->tima);
+  buffer.handle(this->tac);
+  buffer.handle(this->main_clock);
+  buffer.handle(this->sub_clock);
+  buffer.handle(this->div_clock);
+}
 
 void timer::increment(game_boy* gb)
 {

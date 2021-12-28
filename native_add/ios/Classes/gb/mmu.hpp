@@ -1,4 +1,5 @@
 #pragma once
+#include "serializable.hpp"
 
 struct gb_rom;
 class cpu;
@@ -12,7 +13,7 @@ struct mbc
 	int32_t mode = 0;
 };
 
-class mmu
+class mmu : public serializable
 {
 public:
 	mmu(game_boy* game_boy);
@@ -47,6 +48,8 @@ public:
 	mbc mbc[4]{};
 
 	gb_rom* get_rom();
+	
+        void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	static uint8_t bios_[256];

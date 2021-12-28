@@ -1,4 +1,5 @@
 #pragma once
+#include "serializable.hpp"
 #include "timer.hpp"
 
 class game_boy;
@@ -70,7 +71,7 @@ struct cpu_registers
 #pragma warning(pop)
 #endif
 
-class cpu
+class cpu : public serializable
 {
 public:
 	typedef void (*operation)(game_boy*);
@@ -95,11 +96,13 @@ public:
 
 	void skip_bios();
 
+        void serialize(utils::binary_buffer& buffer) override;
+
 private:
-	operation operations_[0x100];
+	operation operations_[0x100]{};
 	static const uint8_t operation_ticks[0x100];
 
-	operation ext_operations_[0x100];
+	operation ext_operations_[0x100]{};
 	static const uint8_t ext_operation_ticks[0x100];
 
 	bool ime_;

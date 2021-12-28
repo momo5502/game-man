@@ -12,6 +12,7 @@
 
 #include "gb/utils/utils.hpp"
 #include "gb/utils/finally.hpp"
+#include "gb/utils/binary_buffer.hpp"
 #include "egl_thread_surface.h"
 
 #include <dlfcn.h>
@@ -112,14 +113,14 @@ public:
         __android_log_write(ANDROID_LOG_INFO, "gbegl", title.data());
     }
 
-    void run(void* data, uint64_t size)
+    void run(void* data, uint64_t size, bool is_save)
     {
         uint8_t* start = reinterpret_cast<uint8_t*>(data);
 
         std::vector<uint8_t> buffer{};
         buffer.assign(start, start + size);
 
-        this->runner = std::thread([this, b = std::move(buffer)]()
+        this->runner = std::thread([this, is_save, b = std::move(buffer)]()
         {
             while (true)
             {
@@ -134,12 +135,12 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
-            this->work(std::move(b));
+            this->work(std::move(b), is_save);
         });
     }
 
 private:
-    void work(std::vector<uint8_t> buffer)
+    void work(std::vector<uint8_t> buffer, bool is_save)
     {
         const auto _ = utils::finally([this]()
         {
@@ -150,8 +151,14 @@ private:
         this->thread_surface_ = std::make_unique<egl_thread_surface>(window);
         this->texture_ = std::make_unique<texture_2d>(GB_WIDTH, GB_HEIGHT);
 
-        gb.load_rom(std::move(buffer));
-        gb.skip_bios();
+        if(is_save) {
+            utils::binary_buffer data{buffer};
+            gb.serialize(data);
+        }
+        else{
+            gb.load_rom(std::move(buffer));
+            gb.skip_bios();
+        }
 
         gb.run();
     }
@@ -172,11 +179,40 @@ press_button(int id, bool value)
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
 void
-load_rom(void* data, uint64_t size)
+load_rom(void* data, uint64_t size, bool is_save)
 {
     std::lock_guard<std::mutex> _(m);
     mobile_gb_egl = std::make_unique<game_boy_mobile_egl>();
-    mobile_gb_egl->run(data, size);
+    mobile_gb_egl->run(data, size, is_save);
+}
+
+extern "C" __attribute__((visibility("default"))) __attribute__((used))
+void
+get_state(void(*callback)(const void* data, uint64_t size))
+{
+    std::lock_guard<std::mutex> _(m);
+    if(!mobile_gb_egl) return;
+
+    // Probably broken, cause of multithreading
+    utils::binary_buffer buffer{};
+    mobile_gb_egl->gb.serialize(buffer);
+
+    const auto& data = buffer.get_buffer();
+    callback(data.data(), data.size());
+}
+
+extern "C" __attribute__((visibility("default"))) __attribute__((used))
+void
+set_paused(bool paused)
+{
+    std::lock_guard<std::mutex> _(m);
+    if (mobile_gb_egl) {
+        if(paused) {
+            mobile_gb_egl->gb.pause();
+        }else {
+            mobile_gb_egl->gb.resume();
+        }
+    }
 }
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))

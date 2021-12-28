@@ -25,7 +25,7 @@ struct gb_rom
 	uint16_t global_checksum;
 };
 
-class game_boy
+class game_boy : public serializable
 {
 public:
 	game_boy(joypad* joypad, display* display);
@@ -45,6 +45,11 @@ public:
 
 	void turn_off();
 
+        void pause();
+        void resume();
+	
+        void serialize(utils::binary_buffer& buffer) override;
+
 private:
 	joypad* joypad_;
 	display* display_;
@@ -53,6 +58,7 @@ private:
 	mmu mmu_;
 	gpu gpu_;
 	std::atomic<bool> off_{false};
+	std::atomic<bool> paused_{false};
 
 	bool frame();
 };

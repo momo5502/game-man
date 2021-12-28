@@ -13,6 +13,18 @@ gpu::gpu(game_boy* game_boy) : gb_(game_boy), mode_(mode_hblank), clock_(0)
 
 gpu::~gpu() = default;
 
+void gpu::serialize(utils::binary_buffer& buffer)
+{
+  buffer.handle(this->mode_);
+  buffer.handle(this->mem_);
+  buffer.handle(this->clock_);
+  buffer.handle(this->last_time_);
+  buffer.handle(this->is_color_gb);
+  buffer.handle(this->screen_buffer_);
+  buffer.handle(this->tiles_);
+  buffer.handle(this->objects_);
+}
+
 void gpu::render_texture() const
 {
 	this->gb_->get_display()->draw_frame(this->screen_buffer_);

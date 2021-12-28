@@ -49,18 +49,36 @@ class PlayerPage extends StatefulWidget {
 }
 
 class _PlayerPageState extends State<PlayerPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool run = false;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      if (state == AppLifecycleState.resumed) {
+        setGbPaused(false);
+      } else {
+        setGbPaused(true);
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     widget.controller.initialize(160 * 2, 144 * 2);
     Future.delayed(const Duration(milliseconds: 500)).then((value) {
-      widget.gameRepository.getGameRom(widget.game).then((rom) {
-        loadGbRom(rom);
+      widget.gameRepository.loadState(widget.game).then((rom) {
+        loadGbRom(rom, true);
         setState(() {
           run = true;
+        });
+      }).catchError((e) {
+        widget.gameRepository.getGameRom(widget.game).then((rom) {
+          loadGbRom(rom, false);
+          setState(() {
+            run = true;
+          });
         });
       });
     });
@@ -82,9 +100,11 @@ class _PlayerPageState extends State<PlayerPage>
         ),
       ),
       onWillPop: () {
-        setState(() {
-          run = false;
-        });
+        setGbPaused(true);
+        final state = getGbState();
+        if (state != null) {
+          widget.gameRepository.storeState(widget.game, state);
+        }
         return Future.value(true);
       },
     );

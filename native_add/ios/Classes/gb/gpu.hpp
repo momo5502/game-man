@@ -1,9 +1,10 @@
 #pragma once
 #include "display.hpp"
+#include "serializable.hpp"
 
 class game_boy;
 
-class gpu
+class gpu : public serializable
 {
 public:
 	gpu(game_boy* game_boy);
@@ -15,6 +16,8 @@ public:
 	void update_tile(uint16_t address);
 	void update_object(uint16_t address, uint8_t value);
 	void set_is_color_gb(bool value);
+	
+        void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	struct memory
