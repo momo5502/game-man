@@ -68,6 +68,16 @@ class GameRepository {
     return false;
   }
 
+  Future<void> deleteState(Game game) async {
+    if (!isLocalGame(game)) {
+      throw Exception("Game must have been downloaded");
+    }
+
+    final gamePath = p.join(await _romPath, game.identifier);
+    final saveName = p.join(gamePath, "save.dat");
+    await File(saveName).delete();
+  }
+
   Future<void> storeState(Game game, Uint8List state) async {
     if (!isLocalGame(game)) {
       throw Exception("Game must have been downloaded");

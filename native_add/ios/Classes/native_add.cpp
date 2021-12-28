@@ -80,6 +80,9 @@ public:
     game_boy gb;
     std::thread runner;
 
+    std::atomic<bool> request_dump{false};
+    std::string dumped_state;
+
     game_boy_mobile_egl()
         : gb(&joypad, this)
     {
@@ -95,6 +98,7 @@ public:
 
     void draw_frame(const color* buffer/* GB_WIDTH * GB_HEIGHT */) override {
         if (!this->thread_surface_ || !this->texture_) {
+            if(request_dump) request_dump = false;
             return;
         }
 
@@ -107,6 +111,20 @@ public:
         this->texture_->draw();
 
         this->thread_surface_->swap_buffers();
+
+        dump_state();
+    }
+
+    void dump_state()
+    {
+        if(request_dump)
+        {
+            utils::binary_buffer data{};
+            gb.serialize(data);
+            dumped_state = data.get_buffer();
+
+            request_dump = false;
+        }
     }
 
     void set_title(std::string title) override {
@@ -161,6 +179,8 @@ private:
         }
 
         gb.run();
+
+        dump_state();
     }
 };
 
@@ -190,14 +210,29 @@ extern "C" __attribute__((visibility("default"))) __attribute__((used))
 void
 get_state(void(*callback)(const void* data, uint64_t size))
 {
-    std::lock_guard<std::mutex> _(m);
+    std::unique_lock<std::mutex> lock(m);
     if(!mobile_gb_egl) return;
 
-    // Probably broken, cause of multithreading
-    utils::binary_buffer buffer{};
-    mobile_gb_egl->gb.serialize(buffer);
+    bool was_paused = mobile_gb_egl->gb.is_paused();
+    mobile_gb_egl->gb.resume();
 
-    const auto& data = buffer.get_buffer();
+    mobile_gb_egl->request_dump = true;
+    while(mobile_gb_egl && mobile_gb_egl->request_dump) {
+        lock.unlock();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        lock.lock();
+    }
+
+    if(!mobile_gb_egl) return;
+
+    auto data = mobile_gb_egl->dumped_state;
+
+    if(was_paused) {
+        mobile_gb_egl->gb.pause();
+    }
+
+    lock.unlock();
+
     callback(data.data(), data.size());
 }
 

@@ -45,10 +45,11 @@ public:
 
 	void turn_off();
 
-        void pause();
-        void resume();
-	
-        void serialize(utils::binary_buffer& buffer) override;
+	void pause();
+	void resume();
+	bool is_paused();
+
+	void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	joypad* joypad_;

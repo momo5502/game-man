@@ -60,6 +60,11 @@ void game_boy::resume()
   this->paused_ = false;
 }
 
+bool game_boy::is_paused()
+{
+	return this->paused_;
+}
+
 bool game_boy::frame()
 {
 	const uint32_t end_tick = this->cpu_.registers.m + 17556;

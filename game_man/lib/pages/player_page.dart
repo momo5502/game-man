@@ -84,6 +84,44 @@ class _PlayerPageState extends State<PlayerPage>
     });
   }
 
+  void _showResetDialog(BuildContext context) {
+    Widget cancelButton = TextButton(
+      child: const Text("Cancel"),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+    Widget deleteButton = TextButton(
+      child: const Text(
+        "Reset",
+        style: TextStyle(color: Colors.red),
+      ),
+      onPressed: () {
+        widget.gameRepository.getGameRom(widget.game).then((rom) {
+          loadGbRom(rom, false);
+          setState(() {
+            run = true;
+          });
+        });
+        Navigator.of(context).pop();
+      },
+    );
+
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text("Reset state"),
+              content:
+                  Text("Are you sure you want to reset ${widget.game.name}?"),
+              actions: [
+                deleteButton,
+                cancelButton,
+              ],
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(20.0))),
+            ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -95,8 +133,10 @@ class _PlayerPageState extends State<PlayerPage>
             statusBarIconBrightness: Brightness.light,
             statusBarBrightness: Brightness.dark,
           ),
-          child:
-              buildPlayer(context, widget.game.image, run, widget.controller),
+          child: buildPlayer(context, widget.game.image, run, widget.controller,
+              () {
+            _showResetDialog(context);
+          }),
         ),
       ),
       onWillPop: () {
@@ -112,7 +152,7 @@ class _PlayerPageState extends State<PlayerPage>
 }
 
 Widget buildPlayer(BuildContext context, String heroTag, bool run,
-    OpenGLTextureController controller) {
+    OpenGLTextureController controller, VoidCallback resetFunction) {
   return Column(
     children: [
       Hero(
@@ -121,7 +161,7 @@ Widget buildPlayer(BuildContext context, String heroTag, bool run,
             controller: controller,
           ),
           tag: heroTag),
-      const GamePad(),
+      GamePad(resetFunction: resetFunction),
     ],
   );
 }
@@ -129,7 +169,10 @@ Widget buildPlayer(BuildContext context, String heroTag, bool run,
 class GamePad extends StatelessWidget {
   const GamePad({
     Key? key,
+    required this.resetFunction,
   }) : super(key: key);
+
+  final VoidCallback resetFunction;
 
   @override
   Widget build(BuildContext context) {
@@ -253,6 +296,31 @@ class GamePad extends StatelessWidget {
                       },
                       child: const Text(
                         "START",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: kDefaultPadding,
+            child: SizedBox(
+              width: size.width,
+              child: Align(
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    FlatGameButton(
+                      onDown: resetFunction,
+                      onUp: () {},
+                      child: const Text(
+                        "RESET",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

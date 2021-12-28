@@ -33,6 +33,15 @@ class GameCards extends StatelessWidget {
         Navigator.of(context).pop();
       },
     );
+    Widget deleteSaveButton = TextButton(
+      child: const Text(
+        "Delete Save",
+      ),
+      onPressed: () {
+        gameRepository.deleteState(game);
+        Navigator.of(context).pop();
+      },
+    );
 
     showDialog(
         context: context,
@@ -40,6 +49,7 @@ class GameCards extends StatelessWidget {
               title: const Text("Delete"),
               content: Text("Are you sure you want to delete ${game.name}?"),
               actions: [
+                deleteSaveButton,
                 deleteButton,
                 cancelButton,
               ],
