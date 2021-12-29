@@ -96,7 +96,10 @@ class _GamePageState extends State<GamePage> {
               games: _getGames(),
               gameRepository: _gameRepository,
             ),
-            SearchHeader(searchController: _searchController),
+            SearchHeader(
+              searchController: _searchController,
+              gameRepository: _gameRepository,
+            ),
           ],
         ),
       ),

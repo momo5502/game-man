@@ -1,5 +1,7 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:game_man/games/game_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants.dart';
@@ -8,9 +10,11 @@ class SearchHeader extends StatelessWidget {
   const SearchHeader({
     Key? key,
     required this.searchController,
+    required this.gameRepository,
   }) : super(key: key);
 
   final TextEditingController searchController;
+  final GameRepository gameRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +134,7 @@ class SearchHeader extends StatelessWidget {
               const Spacer(),
               TextButton(
                 onPressed: () {
-                  print("HI");
+                  importGame(gameRepository);
                 },
                 child:
                     const Icon(Icons.add_sharp, color: Colors.white, size: 30),
@@ -143,3 +147,20 @@ class SearchHeader extends StatelessWidget {
   }
 }
 
+Future<void> importGame(GameRepository gameRepository) async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: ['zip', 'gb', 'gbc', 'gba'],
+  );
+
+  if (result == null) {
+    return;
+  }
+
+  for (final file in result.files) {
+    final String? filePath = file.path;
+    if (filePath != null) {
+      gameRepository.importGame(filePath);
+    }
+  }
+}

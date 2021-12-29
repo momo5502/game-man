@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_archive/flutter_archive.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -35,12 +36,29 @@ class GameRepository {
   final localGames = ValueNotifier<GameList>([]);
 
   Future<Game> _loadGame(String path) async {
-    final imagePath = p.join(path, "image.dat");
+    var imagePath = p.join(path, "image.dat");
     final dataPath = p.join(path, "info.json");
+
+    if (!await File(imagePath).exists()) {
+      imagePath = "";
+    }
 
     final gameData = await File(dataPath).readAsString();
     var game = Game.fromJson(jsonDecode(gameData));
     return Game(game.console, game.name, imagePath, game.identifier);
+  }
+
+  Future<void> importGame(String path) async {
+    final file = File(path);
+    final gameName = basenameWithoutExtension(file.path);
+    final identifier = gameName.toLowerCase().replaceAll(" ", "-");
+
+    final fileData = await file.readAsBytes();
+    final game = Game(GameConsole.unknown, gameName, "", identifier);
+    final gameDownload = GameDownload(fileData, Uint8List(0));
+
+    await _storeGameDownload(game, gameDownload);
+    await refreshLocalGames();
   }
 
   Future<void> refreshLocalGames() async {
@@ -155,9 +173,12 @@ class GameRepository {
 
     final gamePath = p.join(await _romPath, game.identifier);
 
-    final imageName = p.join(gamePath, "image.dat");
-    final imageFile = await File(imageName).create(recursive: true);
-    final imageFuture = imageFile.writeAsBytes(gameDownload.image);
+    if (gameDownload.image.isNotEmpty) {
+      final imageName = p.join(gamePath, "image.dat");
+      final imageFile = await File(imageName).create(recursive: true);
+      final imageFuture = imageFile.writeAsBytes(gameDownload.image);
+      await imageFuture;
+    }
 
     final romName = p.join(gamePath, "rom.dat");
     final romFile = await File(romName).create(recursive: true);
@@ -167,7 +188,6 @@ class GameRepository {
     final dataFile = await File(dataName).create(recursive: true);
     final dataFuture = dataFile.writeAsString(gameData);
 
-    await imageFuture;
     await romFuture;
     await dataFuture;
   }

@@ -43,6 +43,7 @@ dependencies:
   native_add:
     path: ../native_add/
   flutter_archive: ^4.1.0
+  file_picker: ^4.3.0
 
 dev_dependencies:
   flutter_test:

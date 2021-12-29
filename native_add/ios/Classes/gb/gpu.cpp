@@ -106,10 +106,9 @@ void gpu::render_screen()
 							                                                index);
 							this->screen_buffer_[canvasoffs] = color;
 						}
-
-
-						canvasoffs++;
 					}
+
+					canvasoffs++;
 				}
 			}
 		}

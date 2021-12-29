@@ -22,6 +22,10 @@ class GameCard extends StatelessWidget {
   final GestureTapCallback onLongPress;
 
   Widget _getImage() {
+    if(image.isEmpty) {
+      return Container();
+    }
+
     if (!image.startsWith("http")) {
       return Image.file(
         File(image),
