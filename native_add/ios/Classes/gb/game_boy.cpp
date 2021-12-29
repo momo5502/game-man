@@ -60,7 +60,7 @@ void game_boy::resume()
 	this->paused_ = false;
 }
 
-bool game_boy::is_paused()
+bool game_boy::is_paused() const
 {
 	return this->paused_;
 }
@@ -82,9 +82,10 @@ bool game_boy::frame()
 	const auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::high_resolution_clock::now() - start);
 
-	if (delta < (7ms))
+	const auto frame_delay = 15ms / this->speed_scale_;
+	if (delta < frame_delay)
 	{
-		std::this_thread::sleep_for((7ms) - delta);
+		std::this_thread::sleep_for(frame_delay - delta);
 	}
 
 	return true;

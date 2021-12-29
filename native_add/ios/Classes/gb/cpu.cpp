@@ -1511,14 +1511,14 @@ void cpu::setup_operations()
 	// RETI
 	this->operations_[0xD9] = [](game_boy* gb)
 	{
-		gb->get_cpu()->registers.a = gb->get_cpu()->sav_registers_.a;
+		/*gb->get_cpu()->registers.a = gb->get_cpu()->sav_registers_.a;
 		gb->get_cpu()->registers.b = gb->get_cpu()->sav_registers_.b;
 		gb->get_cpu()->registers.c = gb->get_cpu()->sav_registers_.c;
 		gb->get_cpu()->registers.d = gb->get_cpu()->sav_registers_.d;
 		gb->get_cpu()->registers.e = gb->get_cpu()->sav_registers_.e;
 		gb->get_cpu()->registers.f = gb->get_cpu()->sav_registers_.f;
 		gb->get_cpu()->registers.h = gb->get_cpu()->sav_registers_.h;
-		gb->get_cpu()->registers.l = gb->get_cpu()->sav_registers_.l;
+		gb->get_cpu()->registers.l = gb->get_cpu()->sav_registers_.l;*/
 
 		gb->get_cpu()->ime_ = true;
 		gb->get_cpu()->registers.pc = gb->get_cpu()->stack_pop_word();

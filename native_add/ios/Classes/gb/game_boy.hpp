@@ -47,11 +47,12 @@ public:
 
 	void pause();
 	void resume();
-	bool is_paused();
+	bool is_paused() const;
 
 	void serialize(utils::binary_buffer& buffer) override;
 
 private:
+	double speed_scale_{1.0};
 	joypad* joypad_;
 	display* display_;
 	input input_;
