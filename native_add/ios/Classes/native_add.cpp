@@ -255,4 +255,12 @@ void Java_com_example_native_1add_OpenglTexturePlugin_nativeSetSurface(JNIEnv * 
     __android_log_write(ANDROID_LOG_INFO, "gbegl", "Set surface");
     std::lock_guard<std::mutex> _(window_mutex);
     window = flutter_window(jenv, surface);
+
+    std::thread([]()
+    {
+        egl_thread_surface surface(window);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        surface.swap_buffers();
+    }).join();
 }
