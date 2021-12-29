@@ -15,14 +15,14 @@ gpu::~gpu() = default;
 
 void gpu::serialize(utils::binary_buffer& buffer)
 {
-  buffer.handle(this->mode_);
-  buffer.handle(this->mem_);
-  buffer.handle(this->clock_);
-  buffer.handle(this->last_time_);
-  buffer.handle(this->is_color_gb);
-  buffer.handle(this->screen_buffer_);
-  buffer.handle(this->tiles_);
-  buffer.handle(this->objects_);
+	buffer.handle(this->mode_);
+	buffer.handle(this->mem_);
+	buffer.handle(this->clock_);
+	buffer.handle(this->last_time_);
+	buffer.handle(this->is_color_gb_);
+	buffer.handle(this->screen_buffer_);
+	buffer.handle(this->tiles_);
+	buffer.handle(this->objects_);
 }
 
 void gpu::render_texture() const
@@ -210,8 +210,8 @@ uint8_t* gpu::get_memory_ptr(uint16_t address)
 		if (pointer == &this->mem_.lcd_status)
 		{
 			this->mem_.lcd_status = static_cast<uint8_t>(this->mode_ | (this->mem_.curline == this->mem_.raster
-				                                                                  ? 0
-				                                                                  : 0));
+				                                                            ? 0
+				                                                            : 0));
 		}
 
 		return pointer;
@@ -252,7 +252,7 @@ void gpu::update_object(const uint16_t address, const uint8_t value)
 
 void gpu::set_is_color_gb(const bool value)
 {
-	this->is_color_gb = value;
+	this->is_color_gb_ = value;
 }
 
 void gpu::update_tile(uint16_t addr)

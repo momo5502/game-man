@@ -11,8 +11,8 @@ public:
 
 	uint8_t read() const;
 	void write(uint8_t val);
-  
-        void serialize(utils::binary_buffer& buffer) override;
+
+	void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	enum key_bits

@@ -8,13 +8,13 @@ timer::~timer() = default;
 
 void timer::serialize(utils::binary_buffer& buffer)
 {
-  buffer.handle(this->div);
-  buffer.handle(this->tma);
-  buffer.handle(this->tima);
-  buffer.handle(this->tac);
-  buffer.handle(this->main_clock);
-  buffer.handle(this->sub_clock);
-  buffer.handle(this->div_clock);
+	buffer.handle(this->div);
+	buffer.handle(this->tma);
+	buffer.handle(this->tima);
+	buffer.handle(this->tac);
+	buffer.handle(this->main_clock);
+	buffer.handle(this->sub_clock);
+	buffer.handle(this->div_clock);
 }
 
 void timer::increment(game_boy* gb)

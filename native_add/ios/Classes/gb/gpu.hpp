@@ -16,8 +16,8 @@ public:
 	void update_tile(uint16_t address);
 	void update_object(uint16_t address, uint8_t value);
 	void set_is_color_gb(bool value);
-	
-        void serialize(utils::binary_buffer& buffer) override;
+
+	void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	struct memory
@@ -87,7 +87,7 @@ private:
 	memory mem_{};
 	uint32_t clock_;
 	uint32_t last_time_ = 0;
-	bool is_color_gb {false};
+	bool is_color_gb_{false};
 
 	color screen_buffer_[GB_WIDTH * GB_HEIGHT]{};
 	uint8_t tiles_[512][8][8]{};

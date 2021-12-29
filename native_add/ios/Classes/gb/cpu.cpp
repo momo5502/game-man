@@ -73,11 +73,11 @@ cpu::~cpu() = default;
 
 void cpu::serialize(utils::binary_buffer& buffer)
 {
-  this->timer.serialize(buffer);
-  buffer.handle(this->registers);
-  buffer.handle(this->ime_);
-  buffer.handle(this->sav_registers_);
-  buffer.handle(this->halted_);
+	this->timer.serialize(buffer);
+	buffer.handle(this->registers);
+	buffer.handle(this->ime_);
+	buffer.handle(this->sav_registers_);
+	buffer.handle(this->halted_);
 }
 
 void cpu::setup_operations()
@@ -1424,7 +1424,7 @@ void cpu::setup_operations()
 	// CALL nn
 	this->operations_[0xCD] = [](game_boy* gb)
 	{
-	        const uint16_t call_loc = gb->get_cpu()->read_program_word();
+		const uint16_t call_loc = gb->get_cpu()->read_program_word();
 		gb->get_cpu()->stack_push_word(gb->get_cpu()->registers.pc);
 		gb->get_cpu()->registers.pc = call_loc;
 	};
@@ -1683,10 +1683,10 @@ void cpu::setup_operations()
 	// LD HL,SP+r8
 	this->operations_[0xF8] = [](game_boy* gb)
 	{
-	        const int8_t value = gb->get_cpu()->read_program_byte();
-                const int32_t result = gb->get_cpu()->registers.sp + value;
+		const int8_t value = gb->get_cpu()->read_program_byte();
+		const int32_t result = gb->get_cpu()->registers.sp + value;
 
-	  	gb->get_cpu()->registers.f = 0;
+		gb->get_cpu()->registers.f = 0;
 		if (((gb->get_cpu()->registers.sp ^ value ^ (result & 0xFFFF)) & 0x100) == 0x100)
 			gb->get_cpu()->registers.f |=
 				flag_carry;
@@ -1694,7 +1694,7 @@ void cpu::setup_operations()
 			gb->get_cpu()->registers.f |=
 				flag_half_carry;
 
-	        gb->get_cpu()->registers.hl = static_cast<uint16_t>(result & 0xffff);
+		gb->get_cpu()->registers.hl = static_cast<uint16_t>(result & 0xffff);
 	};
 
 	// LD SP,HL
@@ -3117,7 +3117,7 @@ void cpu::sub(const uint8_t reg)
 	const int8_t value = reg;
 	const uint32_t result = this->registers.a - value;
 	const int32_t carrybits = this->registers.a ^ value ^ result;
-        const auto result_8 = static_cast<uint8_t>(result);
+	const auto result_8 = static_cast<uint8_t>(result);
 
 	this->registers.f = flag_negative;
 	if ((carrybits & 0x100) != 0) this->registers.f |= flag_carry;

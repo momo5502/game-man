@@ -4,6 +4,6 @@
 class serializable
 {
 public:
-        virtual ~serializable() = default;
-        virtual void serialize(utils::binary_buffer& buffer) = 0;
+	virtual ~serializable() = default;
+	virtual void serialize(utils::binary_buffer& buffer) = 0;
 };

@@ -4,7 +4,7 @@ class joypad
 {
 public:
 	virtual ~joypad() = default;
-	
+
 	virtual bool is_up_pressed() = 0;
 	virtual bool is_down_pressed() = 0;
 	virtual bool is_left_pressed() = 0;

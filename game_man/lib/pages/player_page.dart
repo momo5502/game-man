@@ -1,14 +1,9 @@
-import 'dart:typed_data';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:game_man/games/game.dart';
 import 'package:game_man/games/game_repository.dart';
 import 'package:native_add/native_add.dart';
 import '../constants.dart';
-
-String activeGame = "";
 
 class OpenGLTextureController {
   static const MethodChannel _channel = MethodChannel('opengl_texture');
@@ -22,11 +17,10 @@ class OpenGLTextureController {
       'width': width,
       'height': height,
     });
-    print("Id: $textureId");
     return textureId!;
   }
 
-  Future<Null> dispose() =>
+  Future<void> dispose() =>
       _channel.invokeMethod('dispose', {'textureId': textureId});
 
   bool get isInitialized => textureId != null;

@@ -8,7 +8,7 @@ input::input(game_boy* game_boy) : gb_(game_boy), column_(0)
 
 void input::serialize(utils::binary_buffer& buffer)
 {
-  buffer.handle(this->column_);
+	buffer.handle(this->column_);
 }
 
 uint8_t input::read() const

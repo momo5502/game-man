@@ -9,8 +9,8 @@ class timer : public serializable
 public:
 	timer();
 	~timer();
-	
-        void serialize(utils::binary_buffer& buffer) override;
+
+	void serialize(utils::binary_buffer& buffer) override;
 
 	void increment(game_boy* gb);
 

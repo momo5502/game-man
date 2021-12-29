@@ -39,20 +39,20 @@ mmu::mmu(game_boy* game_boy) : gb_(game_boy)
 
 void mmu::serialize(utils::binary_buffer& buffer)
 {
-  buffer.handle(this->vram);
-  buffer.handle(this->eram);
-  buffer.handle(this->wram);
-  buffer.handle(this->zram);
-  buffer.handle(this->i_f);
-  buffer.handle(this->i_e);
-  buffer.handle(this->rom_offset);
-  buffer.handle(this->ram_offset);
-  buffer.handle(this->cartridge_type);
-  buffer.handle(this->mbc);
-  buffer.handle(this->rom_);
-  buffer.handle(this->oam_);
-  buffer.handle(this->zero_);
-  buffer.handle(this->passed_bios_);
+	buffer.handle(this->vram);
+	buffer.handle(this->eram);
+	buffer.handle(this->wram);
+	buffer.handle(this->zram);
+	buffer.handle(this->i_f);
+	buffer.handle(this->i_e);
+	buffer.handle(this->rom_offset);
+	buffer.handle(this->ram_offset);
+	buffer.handle(this->cartridge_type);
+	buffer.handle(this->mbc);
+	buffer.handle(this->rom_);
+	buffer.handle(this->oam_);
+	buffer.handle(this->zero_);
+	buffer.handle(this->passed_bios_);
 }
 
 gb_rom* mmu::get_rom()

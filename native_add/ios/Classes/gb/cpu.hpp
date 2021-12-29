@@ -96,7 +96,7 @@ public:
 
 	void skip_bios();
 
-        void serialize(utils::binary_buffer& buffer) override;
+	void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	operation operations_[0x100]{};

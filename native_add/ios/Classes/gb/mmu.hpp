@@ -48,8 +48,8 @@ public:
 	mbc mbc[4]{};
 
 	gb_rom* get_rom();
-	
-        void serialize(utils::binary_buffer& buffer) override;
+
+	void serialize(utils::binary_buffer& buffer) override;
 
 private:
 	static uint8_t bios_[256];
