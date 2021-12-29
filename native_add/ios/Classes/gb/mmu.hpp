@@ -7,7 +7,7 @@ class game_boy;
 
 struct mbc
 {
-	int32_t rom_bank = 0;
+	int32_t rom_bank = 1;
 	int32_t ram_bank = 0;
 	int32_t ram_on = 0;
 	int32_t mode = 0;

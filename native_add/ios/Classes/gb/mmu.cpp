@@ -85,7 +85,7 @@ uint16_t mmu::read_word(const uint16_t address)
 {
 	const uint16_t low = this->read_byte(address);
 	const uint16_t high = this->read_byte(address + 1);
-	return low | (high << 8);
+	return static_cast<uint16_t>(low | (high << 8));
 }
 
 void mmu::write_byte(const uint16_t address, const uint8_t value)
@@ -142,7 +142,7 @@ void mmu::mark_bios_pass()
 	this->passed_bios_ = true;
 }
 
-void mmu::control_mbc(const uint16_t address, uint8_t value)
+void mmu::control_mbc(const uint16_t address, const uint8_t value)
 {
 	switch (address & 0xF000)
 	{
@@ -166,10 +166,18 @@ void mmu::control_mbc(const uint16_t address, uint8_t value)
 		case 1:
 		case 2:
 		case 3:
-			// Set lower 5 bits of ROM bank (skipping #0)
-			value &= 0x1F;
-			if (!value) value = 1;
-			this->mbc[1].rom_bank = (this->mbc[1].rom_bank & 0x60) | value;
+			int32_t bank = (this->mbc[1].rom_bank & 0x60) | (value & 0x1F);
+			if (bank == 0x00 || bank == 0x20 || bank == 0x40 || bank == 0x60)
+			{
+				bank++;
+			}
+
+			if (bank == 0x1B)
+			{
+				printf("");
+			}
+
+			this->mbc[1].rom_bank = bank;
 
 			// Calculate ROM offset from bank
 			this->rom_offset = this->mbc[1].rom_bank * 0x4000;
@@ -185,7 +193,7 @@ void mmu::control_mbc(const uint16_t address, uint8_t value)
 		case 1:
 		case 2:
 		case 3:
-			if (this->mbc[1].mode)
+			if (this->mbc[1].mode == 1)
 			{
 				// RAM mode: Set bank
 				this->mbc[1].ram_bank = value & 3;
@@ -193,8 +201,13 @@ void mmu::control_mbc(const uint16_t address, uint8_t value)
 			}
 			else
 			{
+				int32_t bank = (this->mbc[1].rom_bank & 0x1F) | ((value & 3) << 5);
+				if (bank == 0x00 || bank == 0x20 || bank == 0x40 || bank == 0x60)
+				{
+					bank++;
+				}
 				// ROM mode: Set high bits of bank
-				this->mbc[1].rom_bank = (this->mbc[1].rom_bank & 0x1F) | ((value & 3) << 5);
+				this->mbc[1].rom_bank = bank;
 				this->rom_offset = this->mbc[1].rom_bank * 0x4000;
 			}
 			break;
