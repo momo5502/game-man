@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'no_glow_scroll_behaviour.dart';
 import 'pages/game_page.dart';
@@ -13,6 +14,10 @@ class GameManApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+
     return MaterialApp(
       title: 'GameMan',
       debugShowCheckedModeBanner: false,

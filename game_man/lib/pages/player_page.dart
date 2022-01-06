@@ -209,40 +209,6 @@ class GamePad extends StatelessWidget {
               }
             },
           ),
-          /*GamePadWidget(gamepadCallback: (e) {
-            if (e is! GamepadButtonEvent) {
-              return;
-            }
-
-            switch (e.button) {
-              case Button.a:
-                pressGbButton(4, e.pressed);
-                break;
-              case Button.b:
-                pressGbButton(5, e.pressed);
-                break;
-              case Button.dpadUp:
-                pressGbButton(0, e.pressed);
-                break;
-              case Button.dpadDown:
-                pressGbButton(1, e.pressed);
-                break;
-              case Button.dpadLeft:
-                pressGbButton(2, e.pressed);
-                break;
-              case Button.dpadRight:
-                pressGbButton(3, e.pressed);
-                break;
-              case Button.menu:
-                pressGbButton(7, e.pressed);
-                break;
-              case Button.options:
-                pressGbButton(6, e.pressed);
-                break;
-              default:
-                break;
-            }
-          }),*/
           Positioned(
             right: kDefaultPadding,
             bottom: bottomOffset + kDefaultPadding * 1.5,
