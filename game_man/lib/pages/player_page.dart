@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:game_man/games/game.dart';
 import 'package:game_man/games/game_repository.dart';
-import 'package:native_add/native_add.dart';
+import 'package:gameboy_core/gameboy_core.dart';
 import '../constants.dart';
 
 class OpenGLTextureController {

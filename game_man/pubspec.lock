@@ -135,6 +135,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  gameboy_core:
+    dependency: "direct main"
+    description:
+      path: "../gameboy_core"
+      relative: true
+    source: path
+    version: "0.0.1"
   google_fonts:
     dependency: "direct main"
     description:
@@ -191,13 +198,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.7.0"
-  native_add:
-    dependency: "direct main"
-    description:
-      path: "../native_add"
-      relative: true
-    source: path
-    version: "0.0.1"
   path:
     dependency: "direct main"
     description:

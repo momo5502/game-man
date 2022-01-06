@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint native_add.podspec` to validate before publishing.
+# Run `pod lib lint gameboy_core.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'native_add'
+  s.name             = 'gameboy_core'
   s.version          = '0.0.1'
   s.summary          = 'A new flutter plugin project.'
   s.description      = <<-DESC

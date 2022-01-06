@@ -1,4 +1,4 @@
-name: native_add
+name: gameboy_core
 description: A new flutter plugin project.
 version: 0.0.1
 homepage:
@@ -29,7 +29,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.example.native_add
+        package: com.momo5502.gameboy_core
         pluginClass: OpenglTexturePlugin
       ios:
         pluginClass: NativeAddPlugin

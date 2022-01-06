@@ -19,7 +19,7 @@ void Function(Pointer<Uint8>, int, bool)? loadRom;
 
 DynamicLibrary getDynamicLib() {
   nativeAddLib ??= Platform.isAndroid
-      ? DynamicLibrary.open('libnative_add.so')
+      ? DynamicLibrary.open('libgameboy_core.so')
       : DynamicLibrary.process();
 
   return nativeAddLib!;

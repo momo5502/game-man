@@ -1,4 +1,4 @@
-package com.example.native_add;
+package com.momo5502.gameboy_core;
 
 import android.graphics.SurfaceTexture;
 import android.util.Log;
@@ -18,7 +18,7 @@ import io.flutter.view.TextureRegistry;
 
 public class OpenglTexturePlugin implements FlutterPlugin, MethodCallHandler {
     static {
-        System.loadLibrary("native_add");
+        System.loadLibrary("gameboy_core");
     }
 
     private MethodChannel channel;
