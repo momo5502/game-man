@@ -172,11 +172,6 @@ void mmu::control_mbc(const uint16_t address, const uint8_t value)
 				bank++;
 			}
 
-			if (bank == 0x1B)
-			{
-				printf("");
-			}
-
 			this->mbc[1].rom_bank = bank;
 
 			// Calculate ROM offset from bank
