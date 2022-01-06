@@ -177,6 +177,72 @@ class GamePad extends StatelessWidget {
     return Expanded(
       child: Stack(
         children: [
+          RawKeyboardListener(
+            focusNode: FocusNode(),
+            child: Container(),
+            onKey: (value) {
+              int? code;
+              if (value.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                code = 2;
+              } else if (value.logicalKey == LogicalKeyboardKey.arrowRight) {
+                code = 3;
+              } else if (value.logicalKey == LogicalKeyboardKey.arrowDown) {
+                code = 1;
+              } else if (value.logicalKey == LogicalKeyboardKey.arrowUp) {
+                code = 0;
+              } else if (value.logicalKey == LogicalKeyboardKey.gameButtonA) {
+                // actually b
+                code = 5;
+              } else if (value.logicalKey == LogicalKeyboardKey.gameButtonB) {
+                // actually a
+                code = 4;
+              } else if (value.logicalKey ==
+                  LogicalKeyboardKey.gameButtonStart) {
+                code = 6;
+              } else if (value.logicalKey ==
+                  LogicalKeyboardKey.gameButtonSelect) {
+                code = 7;
+              }
+
+              if (code != null) {
+                pressGbButton(code, value.isKeyPressed(value.logicalKey));
+              }
+            },
+          ),
+          /*GamePadWidget(gamepadCallback: (e) {
+            if (e is! GamepadButtonEvent) {
+              return;
+            }
+
+            switch (e.button) {
+              case Button.a:
+                pressGbButton(4, e.pressed);
+                break;
+              case Button.b:
+                pressGbButton(5, e.pressed);
+                break;
+              case Button.dpadUp:
+                pressGbButton(0, e.pressed);
+                break;
+              case Button.dpadDown:
+                pressGbButton(1, e.pressed);
+                break;
+              case Button.dpadLeft:
+                pressGbButton(2, e.pressed);
+                break;
+              case Button.dpadRight:
+                pressGbButton(3, e.pressed);
+                break;
+              case Button.menu:
+                pressGbButton(7, e.pressed);
+                break;
+              case Button.options:
+                pressGbButton(6, e.pressed);
+                break;
+              default:
+                break;
+            }
+          }),*/
           Positioned(
             right: kDefaultPadding,
             bottom: bottomOffset + kDefaultPadding * 1.5,
