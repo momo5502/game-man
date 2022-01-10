@@ -164,7 +164,9 @@ class GameRepository {
   }
 
   Future<GameList> searchGames(String text) async {
-    final games = await _gameSource.searchGames(text);
+    var games = await _gameSource.searchGames(text);
+    // Only display gameboy games for now
+    games = games.where((g) => g.console == GameConsole.gameBoy).toList();
     return _removeDuplicates(games);
   }
 
