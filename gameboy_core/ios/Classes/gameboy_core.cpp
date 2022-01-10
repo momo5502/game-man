@@ -251,7 +251,7 @@ set_paused(bool paused)
 }
 
 extern "C" __attribute__((visibility("default"))) __attribute__((used))
-void Java_com_example_native_1add_OpenglTexturePlugin_nativeSetSurface(JNIEnv * jenv, jobject obj, jobject surface) {
+void Java_com_momo5502_gameboy_1core_OpenglTexturePlugin_nativeSetSurface(JNIEnv * jenv, jobject obj, jobject surface) {
     __android_log_write(ANDROID_LOG_INFO, "gbegl", "Set surface");
     std::lock_guard<std::mutex> _(window_mutex);
     window = flutter_window(jenv, surface);
